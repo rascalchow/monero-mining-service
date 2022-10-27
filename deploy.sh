@@ -1,8 +1,8 @@
 #!/bin/bash
 
 echo "Start deploy"
-cd ~/nurseai
-nvm use 9.11.1
+cd ~/API
+nvm use 16
 git pull origin master
 npm install 
 pm2 restart server

@@ -1,17 +1,14 @@
-
 ## Requirements
 
--   Node.js **8+**
--   MongoDB **3.6+**
+- Node.js **8+**
+- MongoDB **3.6+**
 
 ## How to install
 
 ### Install npm dependencies after installing (Git or manual download)
 
 ```bash
-cd myproject
-npm install
-npm update
+yarn
 ```
 
 ### Setting up environments (development or production)
@@ -33,9 +30,9 @@ There are 3 available commands for this: `fresh`, `clean` and `seed`.
 npm run command
 ```
 
--   `fresh` cleans and then seeds the database with dynamic data.
--   `clean` cleans the database.
--   `seed` seeds the database with dynamic data.
+- `fresh` cleans and then seeds the database with dynamic data.
+- `clean` cleans the database.
+- `seed` seeds the database with dynamic data.
 
 ### Running in development mode (lifting API server)
 
@@ -87,7 +84,6 @@ Lint your code with ESLint by typing:
 npm run lint
 ```
 
-
 ### Creating new models
 
 If you need to add more models to the project just create a new file in `/app/models/` and it will be loaded dynamically.
@@ -100,9 +96,8 @@ If you need to add more routes to the project just create a new file in `/app/ro
 
 When you create a new controller file, try to also create another file with validations. Ex. `countries.js` and `countries.validate.js`. An example of this is included in the repository.
 
-
-
 ### Deploy
+
 ```sh
 ssh -o StrictHostKeyChecking=no root@45.32.245.96 "./deploy.sh"
 ```

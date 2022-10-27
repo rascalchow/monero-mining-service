@@ -1,6 +1,6 @@
 module.exports = {
-  // DEVICE: {
-  //   TYPE: ['DEVICE', 'ASSET', 'NONE', 'GENERIC'],
+  // USER: {
+  //   ROLE: [],
   //   STATUS: ['active', 'inactive']
   // },
 }
