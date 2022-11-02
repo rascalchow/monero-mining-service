@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/user')
 const UserAccess = require('../models/userAccess')
+const UserProfile = require('../models/userProfile')
 const ForgotPassword = require('../models/forgotPassword')
 const utils = require('../middleware/utils')
 const uuid = require('uuid')
@@ -10,8 +11,10 @@ const auth = require('../middleware/auth')
 const emailer = require('../middleware/emailer')
 const CONSTS = require('../consts')
 
+
 const HOURS_TO_BLOCK = 2
 const LOGIN_ATTEMPTS = 5
+const PUBLISHER_KEY_LENGTH = 8
 
 /*********************
  * Private functions *
@@ -39,6 +42,19 @@ const generateToken = (user, duration) => {
       process.env.JWT_SECRET
     )
   )
+}
+
+/**
+ * Generates a random unique publisher key
+ * @param {Object} user - user object
+ */
+const generatePubliserKey = () => {
+  const alphaNumerics = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let key = ''
+  for (let i = 0; i < PUBLISHER_KEY_LENGTH; i++) {
+    key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
+  }
+  return key
 }
 
 /**
@@ -243,12 +259,21 @@ const passwordsDoNotMatch = async user => {
  */
 const registerUser = async req => {
   return new Promise((resolve, reject) => {
+    const userProfile = new UserProfile(req.userProfile)
+    userProfile.save((err, item) => {
+      if (err) {
+        reject(utils.buildErrObject(422, err.message))
+      }
+    })
+    
     const user = new User({
       name: req.name,
       email: req.email,
       password: req.password,
       staffId: req.staffId,
-      verification: uuid.v4()
+      verification: uuid.v4(),
+      userProfileId: userProfile.id,
+      publisherKey: generatePubliserKey()
     })
     user.save((err, item) => {
       if (err) {

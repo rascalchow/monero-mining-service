@@ -18,7 +18,8 @@ const AppUserSchema = new mongoose.Schema(
     },
     publisherId: {
       type: mongoose.Schema.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      required: true
     }
   },
   {
