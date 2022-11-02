@@ -19,32 +19,6 @@ exports.updateProfile = [
     .withMessage('IS_EMPTY')
     .trim(),
 
-  // check('staffId')
-  //   .optional()
-  //   .not()
-  //   .isEmpty()
-  //   .withMessage('IS_EMPTY')
-  //   .trim(),
-  check('lastHardwareId')
-    .optional()
-    .not()
-    .isEmpty()
-    .withMessage('IS_EMPTY')
-    .trim(),
-  check('location')
-    .optional(),
-  check('currentSiteId')
-    .optional()
-    .not()
-    .isEmpty()
-    .withMessage('IS_EMPTY')
-    .custom((value) => validationUtil.isValidObjectId(value))
-    .withMessage('INVALID_OBJECT_ID'),
-  check('fcmToken')
-    .optional(),
-  check('areas')
-    .optional(),
-
   (req, res, next) => {
     validationResult(req, res, next)
   }

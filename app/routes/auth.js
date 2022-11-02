@@ -9,6 +9,7 @@ const requireAuth = passport.authenticate('jwt', {
   session: false
 })
 const trimRequest = require('trim-request')
+const CONSTS = require('../consts')
 
 /*
  * Auth routes
@@ -17,11 +18,7 @@ const trimRequest = require('trim-request')
 /*
  * Register route
  */
-router.post(
-  '/register',
-  validate.register,
-  controller.register
-)
+router.post('/register', validate.register, controller.register)
 
 /*
  * Verify route
@@ -54,7 +51,7 @@ router.post(
 router.get(
   '/token',
   requireAuth,
-  AuthController.roleAuthorization(['user', 'admin']),
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   controller.getRefreshToken
 )

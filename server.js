@@ -11,7 +11,7 @@ const app = express()
 // const i18n = require('i18n')
 const initMongo = require('./config/mongo')
 const path = require('path')
-
+const { seedAdminUser } = require('./app/controllers/auth')
 
 // Setup express server port from ENV, default: 3000
 app.set('port', process.env.PORT || 3000)
@@ -71,15 +71,13 @@ app.use(multipart({}))
 
 app.use(require('./app/routes'))
 
-
 const server = require('http').createServer(app)
 server.listen(app.get('port'))
 
-
-
 // Init MongoDB
-initMongo((err) => {
-  // Setup
+initMongo(err => {
+  // Setup)
+  seedAdminUser()
 })
 
 module.exports = app // for testing

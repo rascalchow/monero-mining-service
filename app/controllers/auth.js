@@ -8,6 +8,7 @@ const { addHours } = require('date-fns')
 const { matchedData } = require('express-validator')
 const auth = require('../middleware/auth')
 const emailer = require('../middleware/emailer')
+const CONSTS = require('../consts')
 
 const HOURS_TO_BLOCK = 2
 const LOGIN_ATTEMPTS = 5
@@ -50,6 +51,7 @@ const setUserInfo = req => {
     name: req.name,
     email: req.email,
     role: req.role,
+    status: req.status,
     verified: req.verified
   }
   // Adds verification for testing purposes
@@ -178,7 +180,7 @@ const findUser = async email => {
       {
         email
       },
-      'password loginAttempts blockExpires name email role verified verification',
+      'password status loginAttempts blockExpires name email role verified verification',
       (err, item) => {
         utils.itemNotFound(err, item, reject, 'USER_DOES_NOT_EXIST')
         resolve(item)
@@ -476,15 +478,7 @@ exports.login = async (req, res) => {
       // all ok, register access and return token
       user.loginAttempts = 0
       await saveLoginAttemptsToDB(user)
-      if (req.query.permanent) {
-        res
-          .status(200)
-          .json(
-            await saveUserAccessAndReturnToken(req, user, 10000000000000000)
-          )
-      } else {
-        res.status(200).json(await saveUserAccessAndReturnToken(req, user))
-      }
+      res.status(200).json(await saveUserAccessAndReturnToken(req, user))
     }
   } catch (error) {
     utils.handleError(res, error)
@@ -500,13 +494,12 @@ exports.register = async (req, res) => {
   try {
     req = matchedData(req)
     const doesEmailExists = await emailer.emailExists(req.email)
-    const doesstaffIdExists = await emailer.staffIdExists(req.staffId)
 
-    if (!doesEmailExists || !doesstaffIdExists) {
+    if (!doesEmailExists) {
       const item = await registerUser(req)
       const userInfo = setUserInfo(item)
       const response = returnRegisterToken(item, userInfo)
-      // emailer.sendRegistrationEmailMessage(item)
+
       res.status(201).json(response)
     }
   } catch (error) {
@@ -599,5 +592,32 @@ exports.roleAuthorization = roles => async (req, res, next) => {
     await checkPermissions(data, next)
   } catch (error) {
     utils.handleError(res, error)
+  }
+}
+
+/**
+ * Seed admin user
+ */
+exports.seedAdminUser = async () => {
+  try {
+    const USER = {
+      email: 'admin@nurev.com',
+      name: 'Admin',
+      password: 'NureVAdmin!2#',
+      verification: uuid.v4(),
+      role: CONSTS.USER.ROLE.ADMIN,
+      status: CONSTS.USER.STATUS.ACTIVE,
+      publisherKey: '00000000'
+    }
+    const user = await User.findOne({
+      email: USER.email
+    })
+
+    if (!user) {
+      const user = new User(USER)
+      await user.save()
+    }
+  } catch (err) {
+    console.log(err)
   }
 }

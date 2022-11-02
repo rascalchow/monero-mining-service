@@ -9,6 +9,7 @@ const requireAuth = passport.authenticate('jwt', {
   session: false
 })
 const trimRequest = require('trim-request')
+const CONSTS = require('../consts')
 
 /*
  * Profile routes
@@ -20,7 +21,7 @@ const trimRequest = require('trim-request')
 router.get(
   '/',
   requireAuth,
-  AuthController.roleAuthorization(['user', 'manager', 'admin']),
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   controller.getProfile
 )
@@ -31,7 +32,7 @@ router.get(
 router.patch(
   '/',
   requireAuth,
-  AuthController.roleAuthorization(['user', 'manager',  'admin']),
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   validate.updateProfile,
   controller.updateProfile
@@ -43,7 +44,7 @@ router.patch(
 router.post(
   '/changePassword',
   requireAuth,
-  AuthController.roleAuthorization(['user', 'manager',  'admin']),
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   validate.changePassword,
   controller.changePassword

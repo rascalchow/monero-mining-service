@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcrypt-nodejs')
 const validator = require('validator')
 const mongoosePaginate = require('mongoose-paginate-v2')
+const CONSTS = require('../consts')
 
 const UserSchema = new mongoose.Schema(
   {
@@ -26,8 +27,13 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user'
+      enum: CONSTS.USER.ROLES,
+      default: CONSTS.USER.ROLE.PUBLISHER
+    },
+    status: {
+      type: String,
+      enum: CONSTS.USER.STATUES,
+      default: CONSTS.USER.STATUS.PENDING
     },
     verification: {
       type: String
@@ -49,9 +55,14 @@ const UserSchema = new mongoose.Schema(
       default: Date.now,
       select: false
     },
-    currentSiteId: {
+    userProfileId: {
       type: mongoose.Schema.ObjectId,
-      ref: 'Site'
+      ref: 'UserProfile'
+    },
+    publisherKey: {
+      type: String,
+      required: true,
+      unique: true
     }
   },
   {

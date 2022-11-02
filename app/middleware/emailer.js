@@ -80,24 +80,6 @@ module.exports = {
   },
 
   /**
-   * Checks User model if user with an specific staffId exists
-   * @param {string} email - user email
-   */
-  async staffIdExists(staffId) {
-    return new Promise((resolve, reject) => {
-      User.findOne(
-        {
-          staffId
-        },
-        (err, item) => {
-          itemAlreadyExists(err, item, reject, 'STAFFID_ALREADY_EXISTS')
-          resolve(false)
-        }
-      )
-    })
-  },
-
-  /**
    * Checks User model if user with an specific email exists but excluding user id
    * @param {string} id - user id
    * @param {string} email - user email
@@ -127,7 +109,7 @@ module.exports = {
   async sendRegistrationEmailMessage(user) {
     const subject = 'Verify your email'
     // load template
-    const htmlMessage =  '';
+    const htmlMessage = ''
     //   'registration.MESSAGE',
     //   user.name,
     //   process.env.FRONTEND_URL,

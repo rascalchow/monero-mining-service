@@ -2,7 +2,7 @@ const { validationResult } = require('../middleware/utils')
 const validator = require('validator')
 const { check } = require('express-validator')
 const validationUtil = require('../../utils/validation')
-const _ = require('lodash');
+const _ = require('lodash')
 /**
  * Validates create new item request
  */
@@ -84,6 +84,12 @@ exports.updateItem = [
     .isIn(['user', 'admin'])
     .withMessage('USER_NOT_IN_KNOWN_ROLE'),
   check('phone')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('status')
     .optional()
     .not()
     .isEmpty()

@@ -21,7 +21,7 @@ const createItem = async req => {
       password: req.password,
       role: req.role,
       phone: req.phone,
-      verification: uuid.v4(),
+      verification: uuid.v4()
     })
     user.save((err, item) => {
       if (err) {
@@ -54,7 +54,11 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
-    res.status(200).json(await db.getItems(req, model, query))
+    const processQuery = opt => {
+      opt.populate = ['userProfileId']
+      return opt
+    }
+    res.status(200).json(await db.getItems(req, model, query, processQuery))
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -86,7 +90,7 @@ exports.updateItem = async (req, res) => {
     console.log(req)
     const id = await utils.isIDGood(req.id)
 
-    let user = null;
+    let user = null
 
     const doesEmailExists = await emailer.emailExistsExcludingMyself(
       id,
@@ -95,7 +99,7 @@ exports.updateItem = async (req, res) => {
     if (!doesEmailExists) {
       user = await db.updateItem(id, model, req)
     }
-    
+
     if (!user) {
       utils.buildErrObject(422, 'NOT_FOUND')
     }
