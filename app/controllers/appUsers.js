@@ -4,6 +4,10 @@ const User = require('../models/user')
 const utils = require('../middleware/utils')
 
 
+/*********************
+ * Private functions *
+ *********************/
+
 /**
  * Add a new appUser in database
  * @param {Object} req - request object
@@ -50,8 +54,12 @@ const uninstall = async (id) => {
 }
 
 
+/********************
+ * Public functions *
+ ********************/
+
 /**
- * Verify function called by route
+ * Install function called by route
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
@@ -65,6 +73,11 @@ exports.install = async (req, res) => {
   }
 }
 
+/**
+ * Uninstall function called by route
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
 exports.uninstall = async (req, res) => {
   try {
     const appUser = await uninstall(req.params.id)
@@ -72,5 +85,4 @@ exports.uninstall = async (req, res) => {
   } catch (error) {
     utils.handleError(res, error)
   }
-
 }
