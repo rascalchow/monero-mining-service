@@ -30,6 +30,25 @@ const installAppUser = async req => {
 
 }
 
+/**
+ * Uninstall a app user
+ * @param {ObjectId} id - appUser.id
+ */
+
+const uninstall = async (id) => {
+  let appUser = null
+  try {
+    appUser = await AppUser.findByIdAndUpdate(id, { status: 'uninstalled', }, { new: true })
+  } catch (error) {
+    throw utils.buildErrObject(500, error.message)
+  }
+  if (appUser) {
+    return appUser
+  } else {
+    throw utils.buildErrObject(500, 'APP_USER_ID_IS_INVALID')
+  }
+}
+
 
 /**
  * Verify function called by route
@@ -47,5 +66,11 @@ exports.install = async (req, res) => {
 }
 
 exports.uninstall = async (req, res) => {
+  try {
+    const appUser = await uninstall(req.params.id)
+    res.status(200).json(appUser)
+  } catch (error) {
+    utils.handleError(res, error)
+  }
 
 }
