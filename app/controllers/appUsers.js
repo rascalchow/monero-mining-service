@@ -9,24 +9,25 @@ const utils = require('../middleware/utils')
  * @param {Object} req - request object
  */
 const installAppUser = async req => {
-  return new Promise((resolve, reject) => {
-    User.findOne({ publisherKey: req.publisherKey }, (err, user) => {
-      if (err) {
-        reject(utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY'))
-      }
-      const appUser = new AppUser({
-        ...req,
-        publisherId: user.id
-      })
-
-      appUser.save((err, item) => {
-        if (err) {
-          reject(utils.buildErrObject(400, err.message))
-        }
-        resolve(item)
-      })
+  let user = null
+  try {
+    user = await User.findOne({ publisherKey: req.publisherKey })
+  } catch (err) {
+    throw utils.buildErrObject(500, 'DB_ERROR')
+  }
+  if (!user) {
+    throw utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY')
+  }
+  try {
+    const appUser = AppUser.create({
+      ...req,
+      publisherId: user.id
     })
-  })
+    return appUser
+  } catch (error) {
+    throw utils.buildErrObject(400, err.message)
+  }
+
 }
 
 /**
