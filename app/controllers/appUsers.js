@@ -19,7 +19,7 @@ const installAppUser = async req => {
     throw utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY')
   }
   try {
-    const appUser = AppUser.create({
+    const appUser = await AppUser.create({
       ...req,
       publisherId: user.id
     })
@@ -29,6 +29,7 @@ const installAppUser = async req => {
   }
 
 }
+
 
 /**
  * Verify function called by route
@@ -43,4 +44,8 @@ exports.install = async (req, res) => {
   } catch (error) {
     utils.handleError(res, error)
   }
+}
+
+exports.uninstall = async (req, res) => {
+
 }

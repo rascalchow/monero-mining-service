@@ -25,4 +25,15 @@ router.post(
   controller.install
 )
 
+
+/*
+ * Uninstall route
+ */
+router.post(
+  '/:id/uninstall',
+  requireAuth,
+  trimRequest.all,
+  controller.uninstall
+)
+
 module.exports = router
