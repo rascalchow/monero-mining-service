@@ -15,7 +15,7 @@ const buildSort = (sort, order) => {
   return sortBy
 }
 
-const buildPopulate = (populate) => {
+const buildPopulate = populate => {
   if (!populate) {
     return null
   }
@@ -58,13 +58,13 @@ const listInitOptions = async req => {
     const page = parseInt(req.query.page, 10) || 1
     const limit = parseInt(req.query.limit, 10) || 5
     const populate = buildPopulate(req.query.populate)
-    
+
     const options = {
       select: req.query.fields,
       sort: sortBy,
       lean: true,
       page,
-      limit,
+      limit
     }
 
     if (populate) {
@@ -84,9 +84,7 @@ module.exports = {
   async checkQueryString(query) {
     return new Promise((resolve, reject) => {
       try {
-        if (
-          typeof query.filter !== 'undefined'
-        ) {
+        if (typeof query.filter !== 'undefined') {
           if (query.filter === '') {
             return resolve({})
           }
@@ -125,13 +123,21 @@ module.exports = {
    * Gets item from database by id
    * @param {string} id - item id
    */
-  async getItem(id, model) {
-    return new Promise((resolve, reject) => {
-      model.findById(id, (err, item) => {
-        itemNotFound(err, item, reject, 'NOT_FOUND')
-        resolve(item)
-      })
-    })
+  async getItem(id, model, populate) {
+    let item = null
+    try {
+      let q = model.findById(id)
+      if (populate) {
+        q.populate(populate)
+      }
+      item = await q.exec()
+    } catch (error) {
+      throw buildErrObject(422, err.message)
+    }
+    if (item) {
+      return item
+    }
+    throw buildErrObject(404, 'NOT_FOUND')
   },
 
   /**

@@ -56,7 +56,6 @@ module.exports = {
    * @param {string} token
    */
   verifyToken(token) {
-
     return new Promise((resolve, reject) => {
       jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
@@ -66,5 +65,5 @@ module.exports = {
         resolve(decoded)
       })
     })
-  },
+  }
 }
