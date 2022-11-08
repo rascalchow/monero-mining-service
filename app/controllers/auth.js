@@ -11,7 +11,6 @@ const auth = require('../middleware/auth')
 const emailer = require('../middleware/emailer')
 const CONSTS = require('../consts')
 
-
 const HOURS_TO_BLOCK = 2
 const LOGIN_ATTEMPTS = 5
 const PUBLISHER_KEY_LENGTH = 8
@@ -49,7 +48,8 @@ const generateToken = (user, duration) => {
  * @param {Object} user - user object
  */
 const generatePubliserKey = () => {
-  const alphaNumerics = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const alphaNumerics =
+    '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
   let key = ''
   for (let i = 0; i < PUBLISHER_KEY_LENGTH; i++) {
     key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
@@ -265,7 +265,7 @@ const registerUser = async req => {
         reject(utils.buildErrObject(422, err.message))
       }
     })
-    
+
     const user = new User({
       name: req.name,
       email: req.email,
@@ -597,7 +597,6 @@ exports.getRefreshToken = async (req, res) => {
     const user = await findUserById(userId)
     const token = await saveUserAccessAndReturnToken(req, user)
     // Removes user info from response
-    delete token.user
     res.status(200).json(token)
   } catch (error) {
     utils.handleError(res, error)
