@@ -136,3 +136,25 @@ exports.deleteItem = [
     validationResult(req, res, next)
   }
 ]
+exports.approveUser = [
+  check('id')
+    .exists()
+    .withMessage('MISSING')
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY'),
+  (req, res, next) => {
+    validationResult(req, res, next)
+  }
+]
+exports.rejectUser = [
+  check('id')
+    .exists()
+    .withMessage('MISSING')
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY'),
+  (req, res, next) => {
+    validationResult(req, res, next)
+  }
+]

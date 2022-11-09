@@ -1,6 +1,6 @@
 const { validationResult } = require('../middleware/utils')
 const { check } = require('express-validator')
-
+const { PHONE_REGEX } = require('../consts')
 /**
  * Validates register request
  */
@@ -22,6 +22,8 @@ exports.register = [
   check('phone')
     .exists()
     .withMessage('MISSING')
+    .matches(PHONE_REGEX)
+    .withMessage('PHONENUMBER_IS_NOT_VALID')
     .not()
     .isEmpty()
     .withMessage('IS_EMPTY'),

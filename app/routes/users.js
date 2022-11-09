@@ -21,6 +21,7 @@ const CONSTS = require('../consts')
 router.get(
   '/',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
   trimRequest.all,
   controller.getItems
@@ -32,6 +33,7 @@ router.get(
 router.post(
   '/',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
   trimRequest.all,
   validate.createItem,
@@ -44,6 +46,7 @@ router.post(
 router.get(
   '/:id',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
   trimRequest.all,
   validate.getItem,
@@ -56,6 +59,7 @@ router.get(
 router.patch(
   '/:id',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
   trimRequest.all,
   validate.updateItem,
@@ -68,10 +72,31 @@ router.patch(
 router.delete(
   '/:id',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
   trimRequest.all,
   validate.deleteItem,
   controller.deleteItem
+)
+
+router.post(
+  '/:id/approve',
+  requireAuth,
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  trimRequest.all,
+  validate.approveUser,
+  controller.approveUser
+)
+
+router.post(
+  '/:id/reject',
+  requireAuth,
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  trimRequest.all,
+  validate.rejectUser,
+  controller.rejectUser
 )
 
 module.exports = router

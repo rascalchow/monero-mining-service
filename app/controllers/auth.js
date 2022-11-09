@@ -67,6 +67,7 @@ const setUserInfo = req => {
     name: req.name,
     email: req.email,
     role: req.role,
+    publisherKey: req.publisherKey,
     status: req.status,
     verified: req.verified
   }
@@ -196,7 +197,7 @@ const findUser = async email => {
       {
         email
       },
-      'password status loginAttempts blockExpires name email role verified verification',
+      'status loginAttempts blockExpires name email role verified publisherKey verification',
       (err, item) => {
         utils.itemNotFound(err, item, reject, 'USER_DOES_NOT_EXIST')
         resolve(item)
@@ -214,7 +215,7 @@ const findUserByStaffId = async staffId => {
       {
         staffId
       },
-      'password loginAttempts blockExpires name email role verified verification',
+      'loginAttempts blockExpires name email role verified verification',
       (err, item) => {
         utils.itemNotFound(err, item, reject, 'USER_DOES_NOT_EXIST')
         resolve(item)
@@ -481,6 +482,16 @@ const getUserIdFromToken = async token => {
   })
 }
 
+/**
+ * Check is user is approved
+ * @param {Object} user - user model instance
+ */
+const checkUserIsApproved = user => {
+  if (user.status === 'active') {
+    return true
+  }
+  throw utils.buildErrObject(401, 'USER_IS_NOT_APPROVED')
+}
 /********************
  * Public functions *
  ********************/
@@ -494,16 +505,20 @@ exports.login = async (req, res) => {
   try {
     const data = matchedData(req)
     const user = await findUser(data.email)
+    checkUserIsApproved(user)
     await userIsBlocked(user)
     await checkLoginAttemptsAndBlockExpires(user)
-    const isPasswordMatch = await auth.checkPassword(data.password, user)
+    const isPasswordMatch = await auth.checkPassword(data.email, data.password)
+
     if (!isPasswordMatch) {
       utils.handleError(res, await passwordsDoNotMatch(user))
     } else {
       // all ok, register access and return token
       user.loginAttempts = 0
       await saveLoginAttemptsToDB(user)
-      res.status(200).json(await saveUserAccessAndReturnToken(req, user))
+      const temp = await saveUserAccessAndReturnToken(req, user)
+
+      res.status(200).json(temp)
     }
   } catch (error) {
     utils.handleError(res, error)
@@ -619,6 +634,14 @@ exports.roleAuthorization = roles => async (req, res, next) => {
   }
 }
 
+exports.requireApproval = (req, res, next) => {
+  try {
+    checkUserIsApproved(req.user)
+    next()
+  } catch (error) {
+    utils.handleError(res, error)
+  }
+}
 /**
  * Seed admin user
  */
