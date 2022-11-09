@@ -197,7 +197,7 @@ const findUser = async email => {
       {
         email
       },
-      'password status loginAttempts blockExpires name email role verified verification',
+      'status loginAttempts blockExpires name email role verified publisherKey verification',
       (err, item) => {
         utils.itemNotFound(err, item, reject, 'USER_DOES_NOT_EXIST')
         resolve(item)
@@ -215,7 +215,7 @@ const findUserByStaffId = async staffId => {
       {
         staffId
       },
-      'password loginAttempts blockExpires name email role verified verification',
+      'loginAttempts blockExpires name email role verified verification',
       (err, item) => {
         utils.itemNotFound(err, item, reject, 'USER_DOES_NOT_EXIST')
         resolve(item)
@@ -508,14 +508,17 @@ exports.login = async (req, res) => {
     checkUserIsApproved(user)
     await userIsBlocked(user)
     await checkLoginAttemptsAndBlockExpires(user)
-    const isPasswordMatch = await auth.checkPassword(data.password, user)
+    const isPasswordMatch = await auth.checkPassword(data.email, data.password)
+
     if (!isPasswordMatch) {
       utils.handleError(res, await passwordsDoNotMatch(user))
     } else {
       // all ok, register access and return token
       user.loginAttempts = 0
       await saveLoginAttemptsToDB(user)
-      res.status(200).json(await saveUserAccessAndReturnToken(req, user))
+      const temp = await saveUserAccessAndReturnToken(req, user)
+
+      res.status(200).json(temp)
     }
   } catch (error) {
     utils.handleError(res, error)
