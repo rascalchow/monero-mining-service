@@ -27,6 +27,14 @@ const AppUserSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'User',
       required: true
+    },
+    installedAt: {
+      type: Date,
+      default: Date.now,
+      required: true
+    },
+    uninstalledAt: {
+      type: Date,
     }
   },
   {

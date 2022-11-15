@@ -70,10 +70,14 @@ exports.handleResponse = (res, statusCode, { data, err, }) => {
       success: false,
       err
     })
-  } else {
+  } else if (data) {
     res.status(statusCode || 200).json({
       success: true,
       data
+    })
+  } else {
+    res.status(statusCode || 200).json({
+      success: true,
     })
   }
 }

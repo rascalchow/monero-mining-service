@@ -45,7 +45,6 @@ const generateToken = (user, duration) => {
 
 /**
  * Generates a random unique publisher key
- * @param {Object} user - user object
  */
 const generatePubliserKey = async () => {
 
