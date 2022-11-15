@@ -11,7 +11,14 @@ const AppUserSchema = new mongoose.Schema(
       enum: CONSTS.APP_USER.STATUSES,
       default: CONSTS.APP_USER.STATUS.INSTALLED
     },
-
+    userKey: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    version: {
+      type: String,
+    },
     publisherKey: {
       type: String,
       required: true
