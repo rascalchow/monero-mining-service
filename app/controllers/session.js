@@ -1,10 +1,6 @@
 const { matchedData } = require('express-validator')
 const AppUserSession = require('../models/appUserSession')
 const utils = require('../middleware/utils')
-/********************
- * Private functions *
- ********************/
-
 
 /********************
  * Public functions *
@@ -19,21 +15,11 @@ exports.startRunning = async (req, res) => {
   try {
     req = matchedData(req)
     let session = await AppUserSession.findOne({ userKey: req.userKey })
-    if (session) {
-      if (session.startAt) {
-        console.log(session.startAt)
-        throw utils.buildErrObject(400, 'SESSION_IS_ALREADY_STARTTED')
-      } else {
-        session.startAt = new Date()
-        session.endAt = null
-        await session.save()
-        utils.handleSuccess(res, 203, session._id)
-      }
-    } else {
-      session = await AppUserSession.create(req)
-      utils.handleSuccess(res, 201, session._id)
+    if (session && !session.endAt) {
+      session.remove()
     }
-
+    session = await AppUserSession.create(req)
+    utils.handleSuccess(res, 201, session._id)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
@@ -55,7 +41,6 @@ exports.endRunning = async (req, res) => {
         throw utils.buildErrObject(400, 'SESSION_IS_ALREADY_ENDED')
       }
       session.endAt = new Date()
-      session.startAt = null
       await session.save()
       utils.handleSuccess(res, 203)
     }

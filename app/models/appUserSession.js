@@ -5,15 +5,14 @@ const AppUserSessionSchema = new mongoose.Schema(
   {
     userKey: {
       type: String,
-      required: true,
-      unique: true,
+      required: true
     },
     startAt: {
       type: Date,
-      default: Date.now,
+      default: Date.now
     },
     endAt: {
-      type: Date,
+      type: Date
     }
   },
   {
