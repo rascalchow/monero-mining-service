@@ -24,7 +24,7 @@ const upsertItem = async (version) => {
 const getLatestitem = async () => {
   let doc = null
   try {
-    doc = await Version.find({}, {}, { sort: { 'updatedAt' : -1 } })
+    doc = await Version.find({}, {}, { sort: { 'updatedAt': -1 } })
   } catch (error) {
     throw utils.buildErrObject(500, error.message)
   }
@@ -46,9 +46,9 @@ const getLatestitem = async () => {
 exports.setCurrent = async (req, res) => {
   req = matchedData(req)
   try {
-    res.status(201).json(await upsertItem(req.version))
+    utils.handleSuccess(res, 201, await upsertItem(req.version))
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }
 
@@ -57,10 +57,10 @@ exports.setCurrent = async (req, res) => {
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
- exports.getCurrent = async (req, res) => {
+exports.getCurrent = async (req, res) => {
   try {
-    res.status(200).json(await getLatestitem())
+    utils.handleSuccess(res, 200, await getLatestitem())
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }

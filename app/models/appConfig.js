@@ -1,9 +1,9 @@
 const mongoose = require('mongoose')
 const mongoosePaginate = require('mongoose-paginate-v2')
 
-const VersionSchema = new mongoose.Schema(
+const AppConfigSchema = new mongoose.Schema(
   {
-    version: {
+    eula: {
       type: String,
       required: true,
       unique: true
@@ -15,5 +15,5 @@ const VersionSchema = new mongoose.Schema(
   }
 )
 
-VersionSchema.plugin(mongoosePaginate)
-module.exports = mongoose.model('Version', VersionSchema)
+AppConfigSchema.plugin(mongoosePaginate)
+module.exports = mongoose.model('AppConfig', AppConfigSchema)
