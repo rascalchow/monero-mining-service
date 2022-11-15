@@ -42,11 +42,12 @@ exports.handleError = (res, err) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(err)
   }
+  const statusCode = err.code
+  delete err.code
   // Sends error to user
-  res.status(err.code || 500).json({
-    errors: {
-      msg: err.message
-    }
+  res.status(statusCode || 500).json({
+    success: false,
+    err
   })
 }
 
@@ -55,27 +56,13 @@ exports.handleError = (res, err) => {
  * @param {Object} res - response object
  * @param {Number} statusCode - response status code
  * @param {Object} data - data object
- * @param {Object} err - error object
- */
-exports.handleResponse = (res, statusCode, { data, err, }) => {
-  // Prints error in console
-  if (process.env.NODE_ENV === 'development') {
-    console.log(err)
-  }
 
-  // Sends error to user
-  if (err) {
-    delete err.code
-    res.status(statusCode || 500).json({
-      success: false,
-      err
-    })
-  } else {
-    res.status(statusCode || 200).json({
-      success: true,
-      ...data ? { data } : {}
-    })
-  }
+ */
+exports.handleSuccess = (res, statusCode, data) => {
+  res.status(statusCode || 200).json({
+    success: true,
+    ...data ? { data } : {}
+  })
 }
 
 /**

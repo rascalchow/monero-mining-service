@@ -114,9 +114,9 @@ exports.install = async (req, res) => {
     req = matchedData(req)
     const appUser = await installAppUser(req)
 
-    utils.handleResponse(res, 201, { data: appUser })
+    utils.handleSuccess(res, 201, appUser)
   } catch (error) {
-    utils.handleResponse(res, error.code, { err: error })
+    utils.handleError(res, error)
   }
 }
 
@@ -129,8 +129,8 @@ exports.uninstall = async (req, res) => {
   try {
     req = matchedData(req)
     await uninstall(req)
-    utils.handleResponse(res, 203, {})
+    utils.handleSuccess(res, 203)
   } catch (error) {
-    utils.handleResponse(res, error.code, { err: error })
+    utils.handleError(res, error)
   }
 }

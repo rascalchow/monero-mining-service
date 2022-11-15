@@ -46,9 +46,9 @@ const getLatestitem = async () => {
 exports.setCurrent = async (req, res) => {
   req = matchedData(req)
   try {
-    utils.handleResponse(res, 201, { data: await upsertItem(req.version) })
+    utils.handleSuccess(res, 201, await upsertItem(req.version))
   } catch (error) {
-    utils.handleResponse(res, error.code, { err: error })
+    utils.handleError(res, error)
   }
 }
 
@@ -59,8 +59,8 @@ exports.setCurrent = async (req, res) => {
  */
 exports.getCurrent = async (req, res) => {
   try {
-    utils.handleResponse(res, 200, { data: await getLatestitem() })
+    utils.handleSuccess(res, 200, await getLatestitem())
   } catch (error) {
-    utils.handleResponse(res, error.code, { err: error })
+    utils.handleError(res, error)
   }
 }
