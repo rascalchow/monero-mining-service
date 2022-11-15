@@ -47,12 +47,19 @@ const generateToken = (user, duration) => {
  * Generates a random unique publisher key
  * @param {Object} user - user object
  */
-const generatePubliserKey = () => {
+const generatePubliserKey = async () => {
+
   const alphaNumerics =
     '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
   let key = ''
   for (let i = 0; i < PUBLISHER_KEY_LENGTH; i++) {
     key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
+  }
+  while (await User.find({ publisherKey: key }).length > 0) {
+    let key = ''
+    for (let i = 0; i < PUBLISHER_KEY_LENGTH; i++) {
+      key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
+    }
   }
   return key
 }
@@ -259,14 +266,14 @@ const passwordsDoNotMatch = async user => {
  * @param {Object} req - request object
  */
 const registerUser = async req => {
-  return new Promise((resolve, reject) => {
+  try {
     const userProfile = new UserProfile(req.userProfile)
     userProfile.save((err, item) => {
       if (err) {
         reject(utils.buildErrObject(422, err.message))
       }
     })
-
+    const publisherKey = await generatePubliserKey()
     const user = new User({
       name: req.name,
       email: req.email,
@@ -274,15 +281,13 @@ const registerUser = async req => {
       staffId: req.staffId,
       verification: uuid.v4(),
       userProfileId: userProfile.id,
-      publisherKey: generatePubliserKey()
+      publisherKey
     })
-    user.save((err, item) => {
-      if (err) {
-        reject(utils.buildErrObject(422, err.message))
-      }
-      resolve(item)
-    })
-  })
+    return await user.save()
+  }
+  catch (err) {
+    throw utils.buildErrObject(422, err.message)
+  }
 }
 
 /**

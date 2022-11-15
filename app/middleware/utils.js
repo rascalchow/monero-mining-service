@@ -51,6 +51,34 @@ exports.handleError = (res, err) => {
 }
 
 /**
+ * Handles response by printing to console in development env and builds and sends an response
+ * @param {Object} res - response object
+ * @param {Number} statusCode - response status code
+ * @param {Object} data - data object
+ * @param {Object} err - error object
+ */
+exports.handleResponse = (res, statusCode, { data, err, }) => {
+  // Prints error in console
+  if (process.env.NODE_ENV === 'development') {
+    console.log(err)
+  }
+
+  // Sends error to user
+  if (err) {
+    delete err.code
+    res.status(statusCode || 500).json({
+      success: false,
+      err
+    })
+  } else {
+    res.status(statusCode || 200).json({
+      success: true,
+      data
+    })
+  }
+}
+
+/**
  * Builds error object
  * @param {number} code - error code
  * @param {string} message - error text
