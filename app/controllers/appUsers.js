@@ -40,8 +40,11 @@ const installAppUser = async req => {
     if (!user) {
       throw utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY')
     }
-    if (await AppUser.findOne({ publisherKey: req.publisherKey })) {
-      throw utils.buildErrObject(400, 'USER_ALREADY_INSTALLED')
+    let appUser = await AppUser.findOne({ publisherKey: req.publisherKey })
+    if (appUser) {
+      if (appUser.status === CONSTS.APP_USER.STATUS.INSTALLED) {
+        throw utils.buildErrObject(400, 'USER_ALREADY_INSTALLED')
+      }
     }
 
     if (req.version) {
@@ -50,13 +53,22 @@ const installAppUser = async req => {
         throw utils.buildErrObject(400, 'VERSION_NUMBER_DOES_NOT_EXIST')
       }
     }
+    if (appUser) {
+      appUser.status = CONSTS.APP_USER.STATUS.INSTALLED
+      appUser.installedAt = new Date()
+      appUser.uninstalledAt = null
+      appUser.version = req.version
+      appUser.save()
+    } else {
+      appUser = await AppUser.create({
+        ...req,
+        userKey: await generateUserrKey(),
+        publisherKey: user.publisherKey,
+        publisherId: user.id
+      })
+    }
 
-    const appUser = await AppUser.create({
-      ...req,
-      userKey: await generateUserrKey(),
-      publisherKey: user.publisherKey,
-      publisherId: user.id
-    })
+
     return appUser
   } catch (error) {
     throw utils.buildErrObject(400, error.message)
@@ -80,6 +92,7 @@ const uninstall = async (req) => {
     }
     appUser.status = CONSTS.APP_USER.STATUS.UNINSTALLED
     appUser.uninstalledAt = new Date()
+    appUser.installedAt = null
     await appUser.save()
   } catch (error) {
     throw utils.buildErrObject(error.code || 500, error.message)

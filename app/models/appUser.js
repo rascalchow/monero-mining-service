@@ -31,7 +31,6 @@ const AppUserSchema = new mongoose.Schema(
     installedAt: {
       type: Date,
       default: Date.now,
-      required: true
     },
     uninstalledAt: {
       type: Date,
