@@ -116,7 +116,7 @@ exports.install = async (req, res) => {
 
     utils.handleSuccess(res, 201, appUser)
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }
 
@@ -131,6 +131,6 @@ exports.uninstall = async (req, res) => {
     await uninstall(req)
     utils.handleSuccess(res, 203)
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }

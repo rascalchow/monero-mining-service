@@ -48,7 +48,7 @@ exports.setCurrent = async (req, res) => {
   try {
     utils.handleSuccess(res, 201, await upsertItem(req.version))
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }
 
@@ -61,6 +61,6 @@ exports.getCurrent = async (req, res) => {
   try {
     utils.handleSuccess(res, 200, await getLatestitem())
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }
