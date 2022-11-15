@@ -73,7 +73,7 @@ exports.getItem = async (req, res) => {
   try {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
-    res.status(200).json(await db.getItem(id, model))
+    res.status(200).json(await db.getItem(id, model, 'userProfileId'))
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -145,6 +145,31 @@ exports.deleteItem = async (req, res) => {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
     res.status(200).json(await db.deleteItem(id, model))
+  } catch (error) {
+    utils.handleError(res, error)
+  }
+}
+
+/**
+ * User approve function called by route
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.approveUser = async (req, res) => {
+  try {
+    req = matchedData(req)
+    const id = await utils.isIDGood(req.id)
+    res.status(200).json(await db.updateItem(id, model, { status: 'active' }))
+  } catch (error) {
+    utils.handleError(res, error)
+  }
+}
+
+exports.rejectUser = async (req, res) => {
+  try {
+    req = matchedData(req)
+    const id = await utils.isIDGood(req.id)
+    res.status(200).json(await db.updateItem(id, model, { status: 'rejected' }))
   } catch (error) {
     utils.handleError(res, error)
   }

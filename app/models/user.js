@@ -107,5 +107,13 @@ UserSchema.methods.comparePassword = function(passwordAttempt, cb) {
   )
 }
 
+UserSchema.statics.checkPassword = async function(email, password) {
+  const user = await this.findOne({ email }, 'password')
+  if (!user) {
+    throw new Error({ message: 'no user' })
+  }
+  return bcrypt.compareSync(password, user.password)
+}
+
 UserSchema.plugin(mongoosePaginate)
 module.exports = mongoose.model('User', UserSchema)
