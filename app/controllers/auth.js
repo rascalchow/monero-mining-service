@@ -3,6 +3,7 @@ const User = require('../models/user')
 const UserAccess = require('../models/userAccess')
 const UserProfile = require('../models/userProfile')
 const UserEula = require('../models/userEula')
+const AppConfig = require('../models/appConfig')
 const ForgotPassword = require('../models/forgotPassword')
 const utils = require('../middleware/utils')
 const uuid = require('uuid')
@@ -267,13 +268,10 @@ const passwordsDoNotMatch = async user => {
 const registerUser = async req => {
   try {
     const userProfile = new UserProfile(req.userProfile)
-    userProfile.save((err, item) => {
-      if (err) {
-        reject(utils.buildErrObject(422, err.message))
-      }
-    })
+    await userProfile.save()
+
     const publisherKey = await generatePubliserKey()
-    const user = new User({
+    const user = await User.create({
       name: req.name,
       email: req.email,
       password: req.password,
@@ -282,7 +280,15 @@ const registerUser = async req => {
       userProfileId: userProfile.id,
       publisherKey
     })
-    return await user.save()
+    const eulaTemplate = (await AppConfig.findOne({ type: 'EULA' })).data.eula
+      .replace(/{{companyName}}/g, req.userProfile.companyName)
+      .replace(/{{productName}}/g, req.userProfile.application)
+
+    await UserEula.create({
+      publisherId: user._id,
+      eula: eulaTemplate
+    })
+    return user
   } catch (err) {
     throw utils.buildErrObject(422, err.message)
   }
