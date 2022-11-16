@@ -1,6 +1,19 @@
 const { matchedData } = require('express-validator')
 const AppConfig = require('../models/appConfig')
 const utils = require('../middleware/utils')
+const CONSTS = require('../consts')
+
+/********************
+ * Private functions *
+ ********************/
+
+const createDefaultEula = async () => {
+  return await AppConfig.create({
+    type: 'EULA',
+    data: { eula: CONSTS.DEFAULT_EULA_TEMPLATE }
+  })
+}
+
 /********************
  * Public functions *
  ********************/
@@ -12,8 +25,12 @@ const utils = require('../middleware/utils')
  */
 exports.getEula = async (_, res) => {
   try {
-    const config = await AppConfig.findOne()
-    utils.handleSuccess(res, 200, config.eula)
+    const eulaConfig = await AppConfig.findOne({ type: 'EULA' })
+    if (!eulaConfig) {
+      eulaConfig = await createDefaultEula()
+    }
+
+    utils.handleSuccess(res, 200, eulaConfig.data.eula)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
@@ -27,12 +44,13 @@ exports.getEula = async (_, res) => {
 exports.updateEula = async (req, res) => {
   try {
     req = matchedData(req)
-    const config = await AppConfig.updateOne(
-      {},
-      { eula: req.eula },
+    let eulaConfig = await AppConfig.findOneAndUpdate(
+      { type: 'EULA' },
+      { data: { eula: req.eula } },
       { new: true }
     )
-    utils.handleSuccess(res, 200, config.eula)
+
+    utils.handleSuccess(res, 200, eulaConfig.data.eula)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
@@ -43,13 +61,13 @@ exports.updateEula = async (req, res) => {
  */
 exports.seedAppConfig = async () => {
   try {
-    const appConfig = await AppConfig.findOne()
+    const appConfig = await AppConfig.findOne({ type: 'EULA' })
     console.log('\n\n*****************   START   ******************')
     console.log('            Configuring application')
-    console.log('*****************    END    ******************\n\n\n')
     if (!appConfig) {
-      await AppConfig.create({})
+      createDefaultEula()
     }
+    console.log('*****************    END    ******************\n\n\n')
   } catch (err) {
     console.log(err)
   }

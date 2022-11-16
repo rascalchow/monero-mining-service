@@ -19,5 +19,6 @@ module.exports = {
       UNINSTALLED: 'uninstalled'
     }
   },
-  PHONE_REGEX: /^[+]?[(]?[0-9]{3}[)]?[-s.]?[0-9]{3}[-s.]?[0-9]{4,6}$/
+  PHONE_REGEX: /^[+]?[(]?[0-9]{3}[)]?[-s.]?[0-9]{3}[-s.]?[0-9]{4,6}$/,
+  DEFAULT_EULA_TEMPLATE: 'This is {{companyName}}. This is {{productName}}.'
 }

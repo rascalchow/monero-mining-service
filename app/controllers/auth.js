@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/user')
 const UserAccess = require('../models/userAccess')
 const UserProfile = require('../models/userProfile')
+const UserEula = require('../models/userEula')
 const ForgotPassword = require('../models/forgotPassword')
 const utils = require('../middleware/utils')
 const uuid = require('uuid')
@@ -47,14 +48,13 @@ const generateToken = (user, duration) => {
  * Generates a random unique publisher key
  */
 const generatePubliserKey = async () => {
-
   const alphaNumerics =
     '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
   let key = ''
   for (let i = 0; i < PUBLISHER_KEY_LENGTH; i++) {
     key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
   }
-  while (await User.find({ publisherKey: key }).length > 0) {
+  while ((await User.find({ publisherKey: key }).length) > 0) {
     let key = ''
     for (let i = 0; i < PUBLISHER_KEY_LENGTH; i++) {
       key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
@@ -283,8 +283,7 @@ const registerUser = async req => {
       publisherKey
     })
     return await user.save()
-  }
-  catch (err) {
+  } catch (err) {
     throw utils.buildErrObject(422, err.message)
   }
 }

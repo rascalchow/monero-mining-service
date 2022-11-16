@@ -3,10 +3,12 @@ const mongoosePaginate = require('mongoose-paginate-v2')
 
 const AppConfigSchema = new mongoose.Schema(
   {
-    eula: {
-      type: String,
-      required: true,
-      default: 'This is {{companyName}}. This is {{productName}}.'
+    type: {
+      type: String
+    },
+    data: {
+      type: Object,
+      required: true
     }
   },
   {
