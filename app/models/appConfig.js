@@ -6,7 +6,7 @@ const AppConfigSchema = new mongoose.Schema(
     eula: {
       type: String,
       required: true,
-      unique: true
+      default: 'This is {{companyName}}. This is {{productName}}.'
     }
   },
   {

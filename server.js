@@ -12,6 +12,7 @@ const app = express()
 const initMongo = require('./config/mongo')
 const path = require('path')
 const { seedAdminUser } = require('./app/controllers/auth')
+const { seedAppConfig } = require('./app/controllers/settings')
 
 // Setup express server port from ENV, default: 3000
 app.set('port', process.env.PORT || 3000)
@@ -78,6 +79,7 @@ server.listen(app.get('port'))
 initMongo(err => {
   // Setup)
   seedAdminUser()
+  seedAppConfig()
 })
 
 module.exports = app // for testing
