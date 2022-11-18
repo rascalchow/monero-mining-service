@@ -1,6 +1,4 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcrypt-nodejs')
-const validator = require('validator')
 const mongoosePaginate = require('mongoose-paginate-v2')
 const CONSTS = require('../consts')
 
@@ -14,10 +12,10 @@ const AppUserSchema = new mongoose.Schema(
     userKey: {
       type: String,
       required: true,
-      unique: true,
+      unique: true
     },
     version: {
-      type: String,
+      type: String
     },
     publisherKey: {
       type: String,
@@ -30,10 +28,10 @@ const AppUserSchema = new mongoose.Schema(
     },
     installedAt: {
       type: Date,
-      default: Date.now,
+      default: Date.now
     },
     uninstalledAt: {
-      type: Date,
+      type: Date
     }
   },
   {
