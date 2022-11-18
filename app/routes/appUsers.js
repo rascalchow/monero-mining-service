@@ -30,9 +30,10 @@ router.post(
  * Uninstall route
  */
 router.post(
-  '/:id/uninstall',
+  '/uninstall',
   requireAuth,
   trimRequest.all,
+  validate.uninstall,
   controller.uninstall
 )
 

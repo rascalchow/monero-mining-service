@@ -1,37 +1,76 @@
 const { matchedData } = require('express-validator')
 const AppUser = require('../models/appUser')
+const Version = require('../models/version')
 const User = require('../models/user')
 const utils = require('../middleware/utils')
+const CONSTS = require('../consts')
 
-
+const USER_KEY_LENGTH = 8
 /*********************
  * Private functions *
  *********************/
+
+/**
+ * Generates a random unique user key
+ */
+const generateUserrKey = async () => {
+  const alphaNumerics = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let key = ''
+  for (let i = 0; i < USER_KEY_LENGTH; i++) {
+    key += alphaNumerics.charAt(Math.floor(Math.random() * 36))
+  }
+  while ((await AppUser.find({ userKey: key }).length) > 0) {
+    let key = ''
+    for (let i = 0; i < USER_KEY_LENGTH; i++) {
+      key += alphaNumerics.charAt(Math.floor(Math.random() * 36))
+    }
+  }
+  return key
+}
 
 /**
  * Add a new appUser in database
  * @param {Object} req - request object
  */
 const installAppUser = async req => {
-  let user = null
   try {
-    user = await User.findOne({ publisherKey: req.publisherKey })
-  } catch (err) {
-    throw utils.buildErrObject(500, 'DB_ERROR')
-  }
-  if (!user) {
-    throw utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY')
-  }
-  try {
-    const appUser = await AppUser.create({
-      ...req,
-      publisherId: user.id
-    })
+    const user = await User.findOne({ publisherKey: req.publisherKey })
+    if (!user) {
+      throw utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY')
+    }
+    let appUser = await AppUser.findOne({ publisherKey: req.publisherKey })
+    if (appUser) {
+      if (appUser.status === CONSTS.APP_USER.STATUS.INSTALLED) {
+        throw utils.buildErrObject(400, 'USER_ALREADY_INSTALLED')
+      }
+    }
+
+    if (req.version) {
+      const version = await Version.findOne({ version: req.version })
+      if (!version) {
+        throw utils.buildErrObject(400, 'VERSION_NUMBER_DOES_NOT_EXIST')
+      }
+    }
+    if (appUser) {
+      appUser.status = CONSTS.APP_USER.STATUS.INSTALLED
+      appUser.installedAt = new Date()
+      if (req.version) {
+        appUser.version = req.version
+      }
+      appUser.save()
+    } else {
+      appUser = await AppUser.create({
+        ...req,
+        userKey: await generateUserrKey(),
+        publisherKey: user.publisherKey,
+        publisherId: user.id
+      })
+    }
+
     return appUser
   } catch (error) {
-    throw utils.buildErrObject(400, err.message)
+    throw utils.buildErrObject(400, error.message)
   }
-
 }
 
 /**
@@ -39,20 +78,23 @@ const installAppUser = async req => {
  * @param {ObjectId} id - appUser.id
  */
 
-const uninstall = async (id) => {
-  let appUser = null
+const uninstall = async req => {
   try {
-    appUser = await AppUser.findByIdAndUpdate(id, { status: 'uninstalled', }, { new: true })
+    const appUser = await AppUser.findOne({ userKey: req.userKey })
+    if (!appUser) {
+      throw utils.buildErrObject(400, 'USER_KEY_IS_NOT_FOUND')
+    }
+    if (appUser.status === CONSTS.APP_USER.STATUS.UNINSTALLED) {
+      throw utils.buildErrObject(400, 'USER_IS_ALREADY_UNINSTALLED')
+    }
+    appUser.status = CONSTS.APP_USER.STATUS.UNINSTALLED
+    appUser.uninstalledAt = new Date()
+    appUser.installedAt = null
+    await appUser.save()
   } catch (error) {
-    throw utils.buildErrObject(500, error.message)
-  }
-  if (appUser) {
-    return appUser
-  } else {
-    throw utils.buildErrObject(500, 'APP_USER_ID_IS_INVALID')
+    throw utils.buildErrObject(error.code || 500, error.message)
   }
 }
-
 
 /********************
  * Public functions *
@@ -67,9 +109,10 @@ exports.install = async (req, res) => {
   try {
     req = matchedData(req)
     const appUser = await installAppUser(req)
-    res.status(201).json(appUser)
+
+    utils.handleSuccess(res, 201, appUser)
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }
 
@@ -80,9 +123,10 @@ exports.install = async (req, res) => {
  */
 exports.uninstall = async (req, res) => {
   try {
-    const appUser = await uninstall(req.params.id)
-    res.status(200).json(appUser)
+    req = matchedData(req)
+    await uninstall(req)
+    utils.handleSuccess(res, 203)
   } catch (error) {
-    utils.handleError(res, error)
+    utils.handleErrorV2(res, error)
   }
 }
