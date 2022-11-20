@@ -274,6 +274,7 @@ const registerUser = async req => {
     const user = await User.create({
       name: req.name,
       email: req.email,
+      phone: req.phone,
       password: req.password,
       staffId: req.staffId,
       verification: uuid.v4(),
@@ -628,6 +629,19 @@ exports.getRefreshToken = async (req, res) => {
 }
 
 /**
+ * Change pwd function called by route
+ */
+exports.changePassword = async (req, res, next) => {
+  try {
+    const data = matchedData(req)
+    await updatePassword(data.password, req.user)
+    utils.handleSuccess(res, 204)
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+}
+
+/**
  * Roles authorization function called by route
  * @param {Array} roles - roles specified on the route
  */
@@ -643,6 +657,9 @@ exports.roleAuthorization = roles => async (req, res, next) => {
   }
 }
 
+/**
+ * Approval function called by route
+ */
 exports.requireApproval = (req, res, next) => {
   try {
     checkUserIsApproved(req.user)
@@ -651,6 +668,7 @@ exports.requireApproval = (req, res, next) => {
     utils.handleError(res, error)
   }
 }
+
 /**
  * Seed admin user
  */

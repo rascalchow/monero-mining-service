@@ -1,5 +1,5 @@
-const controller = require('../controllers/profile')
-const validate = require('../controllers/profile.validate')
+const controller = require('../controllers/eula')
+const validate = require('../controllers/eula.validate')
 const AuthController = require('../controllers/auth')
 const express = require('express')
 const router = express.Router()
@@ -11,31 +11,23 @@ const requireAuth = passport.authenticate('jwt', {
 const trimRequest = require('trim-request')
 const CONSTS = require('../consts')
 
-/*
- * Profile routes
- */
-
-/*
- * Get profile route
- */
 router.get(
   '/',
   requireAuth,
-  AuthController.roleAuthorization(CONSTS.USER.ROLES),
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
-  controller.getProfile
+  controller.getUserEula
 )
 
-/*
- * Update profile route
- */
 router.patch(
   '/',
   requireAuth,
-  AuthController.roleAuthorization(CONSTS.USER.ROLES),
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
-  validate.updateProfile,
-  controller.updateProfile
+  validate.updateUserEula,
+  controller.updateUserEula
 )
 
 module.exports = router

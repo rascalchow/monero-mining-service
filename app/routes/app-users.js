@@ -19,6 +19,17 @@ const trimRequest = require('trim-request')
 /*
  * Install route
  */
+router.get(
+  '/',
+  requireAuth,
+  trimRequest.all,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  controller.getDevices
+)
+
+/*
+ * Install route
+ */
 router.post(
   '/install',
   requireAuth,

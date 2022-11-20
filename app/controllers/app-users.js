@@ -146,7 +146,19 @@ exports.getAppStats = async (req, res) => {
       publisherId: req.user.id,
       status: CONSTS.APP_USER.STATUS.UNINSTALLED
     })
-    utils.handleSuccess(res, 200, { installed, uninstalled })
+    const devices = await AppUser.count({
+      publisherId: req.user._id
+    })
+    utils.handleSuccess(res, 200, { installed, uninstalled, devices })
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+}
+
+exports.getDevices = async (req, res) => {
+  try {
+    const devices = await AppUser.find({ publisherId: req.user._id })
+    utils.handleSuccess(res, 200, devices)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }

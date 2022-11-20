@@ -61,4 +61,15 @@ router.get(
  */
 router.post('/login', trimRequest.all, validate.login, controller.login)
 
+/*
+ * Change password
+ */
+router.patch(
+  '/change-password',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
+  trimRequest.all,
+  validate.changePassword,
+  controller.changePassword
+)
 module.exports = router
