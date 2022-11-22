@@ -4,21 +4,17 @@ const trimRequest = require('trim-request')
 
 const controller = require('../controllers/versions')
 const validate = require('../controllers/versions.validate')
-require('../../config/passport')
-const passport = require('passport')
-const requireAuth = passport.authenticate('jwt', {
-  session: false
-})
+const { requireToken } = require('../middleware/device')
 
 /*
  * Set current version
  */
 router.post(
   '/set-current-version',
-  requireAuth,
+  requireToken,
   trimRequest.all,
   validate.setCurrent,
-  controller.setCurrent,
+  controller.setCurrent
 )
 
 /*
@@ -26,9 +22,9 @@ router.post(
  */
 router.get(
   '/get-current-version',
-  requireAuth,
+  requireToken,
   trimRequest.all,
-  controller.getCurrent,
+  controller.getCurrent
 )
 
 module.exports = router

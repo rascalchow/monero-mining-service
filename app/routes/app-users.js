@@ -12,6 +12,8 @@ const requireAuth = passport.authenticate('jwt', {
 
 const trimRequest = require('trim-request')
 
+const { requireToken } = require('../middleware/device')
+
 /*
  * AppUser routes
  */
@@ -32,9 +34,8 @@ router.get(
  */
 router.post(
   '/install',
-  requireAuth,
+  requireToken,
   trimRequest.all,
-  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   validate.install,
   controller.install
 )
@@ -44,9 +45,8 @@ router.post(
  */
 router.post(
   '/uninstall',
-  requireAuth,
+  requireToken,
   trimRequest.all,
-  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   validate.uninstall,
   controller.uninstall
 )

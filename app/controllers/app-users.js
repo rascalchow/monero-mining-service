@@ -155,6 +155,11 @@ exports.getAppStats = async (req, res) => {
   }
 }
 
+/**
+ * Fuction to get  devices
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
 exports.getDevices = async (req, res) => {
   try {
     const devices = await AppUser.find({ publisherId: req.user._id })
