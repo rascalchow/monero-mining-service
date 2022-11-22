@@ -11,8 +11,7 @@ const UserProfileSchema = new mongoose.Schema(
       required: true
     },
     companyLogo: {
-      type: String,
-      default: 'default.png'
+      type: String
     },
     application: {
       type: String,
@@ -22,8 +21,7 @@ const UserProfileSchema = new mongoose.Schema(
       type: String
     },
     productIcon: {
-      type: String,
-      default: 'default.svg'
+      type: String
     },
     userPercentage: {
       type: Number,

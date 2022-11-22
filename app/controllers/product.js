@@ -32,68 +32,51 @@ exports.update = async (req, res) => {
     const { companyLogo, productIcon } = req.files
     const product = await model.findById(req.user.userProfileId)
 
-    const dirPath = path.join(
-      global.APP_ROOT,
-      FILE_UPLOAD_DIR,
-      'product',
-      req.user.userProfileId.toString()
-    )
+    const dirPath = utils.resolveUploadPath(req.user.publisherKey)
+
     const imgPath = {}
 
     if (!fs.existsSync(dirPath)) {
-      fs.mkdir(dirPath)
+      fs.mkdirSync(dirPath)
     }
+
     if (companyLogo) {
       if (
         product.companyLogo &&
-        fs.existsSync(
-          path.join(global.APP_ROOT, FILE_UPLOAD_DIR, product.companyLogo)
-        )
+        fs.existsSync(utils.resolveUploadPath(product.companyLogo))
       ) {
         try {
-          fs.rmSync(
-            path.join(global.APP_ROOT, FILE_UPLOAD_DIR, product.companyLogo)
-          )
+          fs.rmSync(utils.resolveUploadPath(product.companyLogo))
         } catch (error) {
           console.log(error)
         }
       }
       imgPath.companyLogo = path.join(
-        'product',
-        product._id.toString(),
+        req.user.publisherKey,
         uuid() + companyLogo.name
       )
       fs.createReadStream(companyLogo.path).pipe(
-        fs.createWriteStream(
-          path.join(global.APP_ROOT, FILE_UPLOAD_DIR, imgPath.companyLogo)
-        )
+        fs.createWriteStream(utils.resolveUploadPath(imgPath.companyLogo))
       )
     }
 
     if (productIcon) {
       if (
         product.productIcon &&
-        fs.existsSync(
-          path.join(global.APP_ROOT, FILE_UPLOAD_DIR, product.productIcon)
-        )
+        fs.existsSync(utils.resolveUploadPath(product.productIcon))
       ) {
         try {
-          fs.rmSync(
-            path.join(global.APP_ROOT, FILE_UPLOAD_DIR, product.productIcon)
-          )
+          fs.rmSync(utils.resolveUploadPath(product.productIcon))
         } catch (error) {
           console.log(error)
         }
       }
       imgPath.productIcon = path.join(
-        'product',
-        product._id.toString(),
+        req.user.publisherKey,
         uuid() + productIcon.name
       )
       fs.createReadStream(productIcon.path).pipe(
-        fs.createWriteStream(
-          path.join(global.APP_ROOT, FILE_UPLOAD_DIR, imgPath.productIcon)
-        )
+        fs.createWriteStream(utils.resolveUploadPath(imgPath.productIcon))
       )
     }
 

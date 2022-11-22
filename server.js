@@ -1,3 +1,4 @@
+global.APP_ROOT = __dirname
 require('dotenv-safe').config()
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -81,5 +82,5 @@ initMongo(err => {
   seedAdminUser()
   seedAppConfig()
 })
-global.APP_ROOT = __dirname
+
 module.exports = app // for testing

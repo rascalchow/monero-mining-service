@@ -1,3 +1,5 @@
+const path = require('path')
+const { FILE_UPLOAD_DIR } = require('../consts')
 const requestIp = require('request-ip')
 const { validationResult } = require('express-validator')
 
@@ -79,7 +81,7 @@ exports.handleErrorV2 = (res, err) => {
 exports.handleSuccess = (res, statusCode, data) => {
   res.status(statusCode || 200).json({
     success: true,
-    ...data ? { data } : {}
+    ...(data ? { data } : {})
   })
 }
 
@@ -168,8 +170,11 @@ exports.itemAlreadyExists = (err, item, reject, message) => {
   }
 }
 
-
-exports.validateHardware = (hardwareId) => {
+exports.validateHardware = hardwareId => {
   const regEx = /[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}/
   return regEx.test(hardwareId)
+}
+
+exports.resolveUploadPath = p => {
+  return path.join(global.APP_ROOT, FILE_UPLOAD_DIR, p)
 }
