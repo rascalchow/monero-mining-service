@@ -38,12 +38,6 @@ const installApp = async req => {
     if (!user) {
       throw utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY')
     }
-    let appUser = await AppUser.findOne({ publisherKey: req.publisherKey })
-    if (appUser) {
-      if (appUser.status === CONSTS.APP_USER.STATUS.INSTALLED) {
-        throw utils.buildErrObject(400, 'USER_ALREADY_INSTALLED')
-      }
-    }
 
     if (req.version) {
       const version = await Version.findOne({ version: req.version })
@@ -51,21 +45,13 @@ const installApp = async req => {
         throw utils.buildErrObject(400, 'VERSION_NUMBER_DOES_NOT_EXIST')
       }
     }
-    if (appUser) {
-      appUser.status = CONSTS.APP_USER.STATUS.INSTALLED
-      appUser.installedAt = new Date()
-      if (req.version) {
-        appUser.version = req.version
-      }
-      appUser.save()
-    } else {
-      appUser = await AppUser.create({
-        ...req,
-        userKey: await generateUserrKey(),
-        publisherKey: user.publisherKey,
-        publisherId: user.id
-      })
-    }
+
+    const appUser = await AppUser.create({
+      ...req,
+      userKey: await generateUserrKey(),
+      publisherKey: user.publisherKey,
+      publisherId: user.id
+    })
 
     return appUser
   } catch (error) {
