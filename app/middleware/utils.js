@@ -1,4 +1,6 @@
 const path = require('path')
+const fs = require('fs')
+const { execSync } = require('child_process')
 const { FILE_UPLOAD_DIR } = require('../consts')
 const requestIp = require('request-ip')
 const { validationResult } = require('express-validator')
@@ -177,4 +179,23 @@ exports.validateHardware = hardwareId => {
 
 exports.resolveUploadPath = p => {
   return path.join(global.APP_ROOT, FILE_UPLOAD_DIR, p)
+}
+
+exports.crupdateMsi = (publisherKey, companyName, productName) => {
+  const dirPath = path.join(global.APP_ROOT, FILE_UPLOAD_DIR, publisherKey)
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath)
+  }
+  const cmd = path.join(global.APP_ROOT, 'assets/reptool')
+  const src = path.join(global.APP_ROOT, 'assets/install.msi')
+  const dest = path.join(
+    global.APP_ROOT,
+    FILE_UPLOAD_DIR,
+    publisherKey,
+    'install.msi'
+  )
+
+  execSync(
+    `${cmd} ${src} ${dest} ${publisherKey} ${companyName} ${productName}`
+  )
 }

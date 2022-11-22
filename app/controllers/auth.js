@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken')
 const path = require('path')
-const fs = require('fs')
-const { execSync } = require('child_process')
 const User = require('../models/user')
 const UserAccess = require('../models/userAccess')
 const UserProfile = require('../models/userProfile')
@@ -292,25 +290,10 @@ const registerUser = async req => {
       publisherId: user._id,
       eula: eulaTemplate
     })
-    const dirPath = path.join(
-      global.APP_ROOT,
-      CONSTS.FILE_UPLOAD_DIR,
-      publisherKey
-    )
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath)
-    }
-    const cmd = path.join(global.APP_ROOT, 'assets/reptool')
-    const src = path.join(global.APP_ROOT, 'assets/install.msi')
-    const dest = path.join(
-      global.APP_ROOT,
-      CONSTS.FILE_UPLOAD_DIR,
+    utils.crupdateMsi(
       publisherKey,
-      'install.msi'
-    )
-    console.log(cmd)
-    execSync(
-      `${cmd} ${src} ${dest} ${publisherKey} ${req.userProfile.companyName} ${req.userProfile.application}`
+      req.userProfile.companyName,
+      req.userProfile.application
     )
     return user
   } catch (err) {
