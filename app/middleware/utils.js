@@ -198,4 +198,5 @@ exports.crupdateMsi = (publisherKey, companyName, productName) => {
   execSync(
     `${cmd} ${src} ${dest} ${publisherKey} ${companyName} ${productName}`
   )
+  return path.join(publisherKey, 'install.msi')
 }

@@ -268,10 +268,17 @@ const passwordsDoNotMatch = async user => {
  */
 const registerUser = async req => {
   try {
-    const userProfile = new UserProfile(req.userProfile)
-    await userProfile.save()
-
     const publisherKey = await generatePubliserKey()
+
+    const userProfile = new UserProfile({
+      ...req.userProfile,
+      installer: utils.crupdateMsi(
+        publisherKey,
+        req.userProfile.companyName,
+        req.userProfile.application
+      )
+    })
+    await userProfile.save()
     const user = await User.create({
       name: req.name,
       email: req.email,
@@ -290,11 +297,7 @@ const registerUser = async req => {
       publisherId: user._id,
       eula: eulaTemplate
     })
-    utils.crupdateMsi(
-      publisherKey,
-      req.userProfile.companyName,
-      req.userProfile.application
-    )
+
     return user
   } catch (err) {
     throw utils.buildErrObject(422, err.message)
