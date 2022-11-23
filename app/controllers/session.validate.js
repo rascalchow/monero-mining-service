@@ -14,15 +14,3 @@ exports.startRunning = [
     validationResult(req, res, next)
   }
 ]
-
-exports.endRunning = [
-  check('sessionId')
-    .exists()
-    .withMessage('MISSING')
-    .not()
-    .isEmpty()
-    .withMessage('IS_EMPTY'),
-  (req, res, next) => {
-    validationResult(req, res, next)
-  }
-]

@@ -14,10 +14,11 @@ const utils = require('../middleware/utils')
 exports.startRunning = async (req, res) => {
   try {
     req = matchedData(req)
-    let session = await AppUserSession.findOne({ userKey: req.userKey })
-    if (session && !session.endAt) {
-      session.remove()
-    }
+    await AppUserSession.updateMany(
+      { userKey: req.userKey, endAt: null },
+      { endAt: new Date() }
+    )
+
     session = await AppUserSession.create(req)
     utils.handleSuccess(res, 201, session._id)
   } catch (error) {
@@ -33,17 +34,24 @@ exports.startRunning = async (req, res) => {
 exports.endRunning = async (req, res) => {
   try {
     req = matchedData(req)
-    let session = await AppUserSession.findById(req.sessionId)
-    if (!session) {
-      throw utils.buildErrObject(400, 'SESSION_ID_DOES_NOT_EXISTS')
-    } else {
-      if (session.endAt) {
-        throw utils.buildErrObject(400, 'SESSION_IS_ALREADY_ENDED')
+    if (req.sessionId) {
+      let session = await AppUserSession.findById(req.sessionId)
+      if (!session) {
+        throw utils.buildErrObject(400, 'SESSION_ID_DOES_NOT_EXISTS')
+      } else {
+        if (session.endAt) {
+          throw utils.buildErrObject(400, 'SESSION_IS_ALREADY_ENDED')
+        }
+        session.endAt = new Date()
+        await session.save()
       }
-      session.endAt = new Date()
-      await session.save()
-      utils.handleSuccess(res, 203)
+    } else {
+      await AppUserSession.updateMany(
+        { userKey: req.userKey, endAt: null },
+        { endAt: new Date() }
+      )
     }
+    utils.handleSuccess(res, 203)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
