@@ -23,6 +23,9 @@ const UserProfileSchema = new mongoose.Schema(
     productIcon: {
       type: String
     },
+    installer: {
+      type: String
+    },
     userPercentage: {
       type: Number,
       default: 0.0

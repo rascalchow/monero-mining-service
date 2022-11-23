@@ -79,7 +79,7 @@ exports.update = async (req, res) => {
         fs.createWriteStream(utils.resolveUploadPath(imgPath.productIcon))
       )
     }
-    utils.crupdateMsi(
+    imgPath.installer = utils.crupdateMsi(
       req.user.publisherKey,
       product.companyName,
       data.productName
