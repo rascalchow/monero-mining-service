@@ -184,7 +184,7 @@ exports.resolveUploadPath = p => {
 exports.crupdateMsi = (publisherKey, companyName, productName) => {
   const dirPath = path.join(global.APP_ROOT, FILE_UPLOAD_DIR, publisherKey)
   if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath)
+    fs.mkdirSync(dirPath, 0777)
   }
   const cmd = path.join(global.APP_ROOT, 'assets/reptool')
   const src = path.join(global.APP_ROOT, 'assets/install.msi')
