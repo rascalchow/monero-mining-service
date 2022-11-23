@@ -1,5 +1,5 @@
-const controller = require('../controllers/profile')
-const validate = require('../controllers/profile.validate')
+const controller = require('../controllers/product')
+const validate = require('../controllers/product.validate')
 const AuthController = require('../controllers/auth')
 const express = require('express')
 const router = express.Router()
@@ -23,19 +23,19 @@ router.get(
   requireAuth,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
-  controller.getProfile
+  controller.get
 )
 
 /*
  * Update profile route
  */
-router.patch(
+router.post(
   '/',
   requireAuth,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
-  validate.updateProfile,
-  controller.updateProfile
+  validate.update,
+  controller.update
 )
 
 module.exports = router

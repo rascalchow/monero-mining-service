@@ -10,9 +10,26 @@ const UserProfileSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    companyLogo: {
+      type: String
+    },
     application: {
       type: String,
       required: true
+    },
+    currencyName: {
+      type: String
+    },
+    productIcon: {
+      type: String
+    },
+    userPercentage: {
+      type: Number,
+      default: 0.0
+    },
+    numberOfVirtualCoins: {
+      type: Number,
+      default: 0
     },
     contact: {
       type: String,
@@ -29,9 +46,6 @@ const UserProfileSchema = new mongoose.Schema(
       required: true
     },
     moreInformation: {
-      type: String
-    },
-    eula: {
       type: String
     }
   },

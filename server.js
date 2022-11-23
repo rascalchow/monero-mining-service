@@ -1,3 +1,4 @@
+global.APP_ROOT = __dirname
 require('dotenv-safe').config()
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -64,7 +65,7 @@ app.use(cors())
 app.use(passport.initialize())
 app.use(compression())
 app.use(helmet())
-app.use(express.static('public'))
+app.use(express.static('uploads'))
 app.set('views', path.join(__dirname, 'views'))
 app.engine('html', require('ejs').renderFile)
 app.set('view engine', 'html')

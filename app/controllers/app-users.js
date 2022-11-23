@@ -32,17 +32,11 @@ const generateUserrKey = async () => {
  * Add a new appUser in database
  * @param {Object} req - request object
  */
-const installAppUser = async req => {
+const installApp = async req => {
   try {
     const user = await User.findOne({ publisherKey: req.publisherKey })
     if (!user) {
       throw utils.buildErrObject(400, 'UNKNOWN_PUBLISHER_KEY')
-    }
-    let appUser = await AppUser.findOne({ publisherKey: req.publisherKey })
-    if (appUser) {
-      if (appUser.status === CONSTS.APP_USER.STATUS.INSTALLED) {
-        throw utils.buildErrObject(400, 'USER_ALREADY_INSTALLED')
-      }
     }
 
     if (req.version) {
@@ -51,21 +45,13 @@ const installAppUser = async req => {
         throw utils.buildErrObject(400, 'VERSION_NUMBER_DOES_NOT_EXIST')
       }
     }
-    if (appUser) {
-      appUser.status = CONSTS.APP_USER.STATUS.INSTALLED
-      appUser.installedAt = new Date()
-      if (req.version) {
-        appUser.version = req.version
-      }
-      appUser.save()
-    } else {
-      appUser = await AppUser.create({
-        ...req,
-        userKey: await generateUserrKey(),
-        publisherKey: user.publisherKey,
-        publisherId: user.id
-      })
-    }
+
+    const appUser = await AppUser.create({
+      ...req,
+      userKey: await generateUserrKey(),
+      publisherKey: user.publisherKey,
+      publisherId: user.id
+    })
 
     return appUser
   } catch (error) {
@@ -108,7 +94,7 @@ const uninstall = async req => {
 exports.install = async (req, res) => {
   try {
     req = matchedData(req)
-    const appUser = await installAppUser(req)
+    const appUser = await installApp(req)
 
     utils.handleSuccess(res, 201, appUser)
   } catch (error) {
@@ -126,6 +112,44 @@ exports.uninstall = async (req, res) => {
     req = matchedData(req)
     await uninstall(req)
     utils.handleSuccess(res, 203)
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+}
+
+/**
+ * Fuction to get  the number of installed/uninstalled apps,  called by route
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.getAppStats = async (req, res) => {
+  try {
+    const installed = await AppUser.count({
+      publisherId: req.user.id,
+      status: CONSTS.APP_USER.STATUS.INSTALLED
+    })
+    const uninstalled = await AppUser.count({
+      publisherId: req.user.id,
+      status: CONSTS.APP_USER.STATUS.UNINSTALLED
+    })
+    const devices = await AppUser.count({
+      publisherId: req.user._id
+    })
+    utils.handleSuccess(res, 200, { installed, uninstalled, devices })
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+}
+
+/**
+ * Fuction to get  devices
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.getDevices = async (req, res) => {
+  try {
+    const devices = await AppUser.find({ publisherId: req.user._id })
+    utils.handleSuccess(res, 200, devices)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
