@@ -58,13 +58,14 @@ const listInitOptions = async req => {
     const page = parseInt(req.query.page, 10) || 1
     const limit = parseInt(req.query.limit, 10) || 5
     const populate = buildPopulate(req.query.populate)
-
+    const search = JSON.parse(req.query.filter)['search']
     const options = {
       select: req.query.fields,
       sort: sortBy,
       lean: true,
       page,
-      limit
+      limit,
+      search
     }
 
     if (populate) {
@@ -109,6 +110,8 @@ module.exports = {
   async getItems(req, model, query, processQuery) {
     const options = await listInitOptions(req)
     const processedOpt = processQuery ? processQuery(options) : options
+    console.log('processedOpt--------->',processedOpt)
+    console.log('query----------->',query)
     return new Promise((resolve, reject) => {
       model.paginate(query, processedOpt, (err, items) => {
         if (err) {

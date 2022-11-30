@@ -478,6 +478,7 @@ const checkPermissions = async (data, next) => {
     User.findById(data.id, (err, result) => {
       utils.itemNotFound(err, result, reject, 'NOT_FOUND')
       if (data.roles.indexOf(result.role) > -1) {
+        console.log('checkPermissions==========>')
         return resolve(next())
       }
       return reject(utils.buildErrObject(401, 'UNAUTHORIZED'))
@@ -660,6 +661,7 @@ exports.roleAuthorization = roles => async (req, res, next) => {
       id: req.user._id,
       roles
     }
+    console.log('roleAuthorization========>', data)
     await checkPermissions(data, next)
   } catch (error) {
     utils.handleError(res, error)
@@ -670,6 +672,7 @@ exports.roleAuthorization = roles => async (req, res, next) => {
  * Approval function called by route
  */
 exports.requireApproval = (req, res, next) => {
+  console.log('requireApproval===========>')
   try {
     checkUserIsApproved(req.user)
     next()

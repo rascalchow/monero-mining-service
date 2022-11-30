@@ -1,4 +1,5 @@
 const model = require('../models/user')
+const profileModel = require('../models/userProfile')
 const uuid = require('uuid')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
@@ -54,11 +55,41 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
+    var search = ''
+    if (query.search) {
+      search = query.search
+      delete query.search
+      query['$or'] = [
+        { name: { $regex: `.*${search}.*` } },
+        { email: { $regex: `.*${search}.*` } },
+      ]
+    }
     const processQuery = opt => {
+    //   console.log(search)
+    //   opt.populate = [{
+    //     path: 'userProfileId',
+    //     match: {
+    //       $or: [
+    //         { companyName: { $regex: `.*${search}.*` } }
+    //       ]
+    //     }
+    //   }
+    // ]
       opt.populate = ['userProfileId']
       return opt
     }
-    res.status(200).json(await db.getItems(req, model, query, processQuery))
+
+    const data = (await db.getItems(req, model, query, processQuery))
+    console.log(data)
+    const result = {
+      ...data,
+      docs: data.docs.filter(item => item.userProfileId !== null)
+    }
+    // data.filter(item=>item.userProfileId !== null );
+
+    // console.log(data.filter(item => item.userProfileId !== null))
+
+    res.status(200).json(result)
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -85,11 +116,14 @@ exports.getItem = async (req, res) => {
  * @param {Object} res - response object
  */
 exports.updateItem = async (req, res) => {
+
+  var profileInfo = req.body
+  delete profileInfo.name
+  delete profileInfo.email
+
   try {
     req = matchedData(req)
-    console.log(req)
     const id = await utils.isIDGood(req.id)
-
     let user = null
 
     const doesEmailExists = await emailer.emailExistsExcludingMyself(
@@ -98,18 +132,27 @@ exports.updateItem = async (req, res) => {
     )
     if (!doesEmailExists) {
       user = await db.updateItem(id, model, req)
+      let profileId = user.userProfileId
+      var userProfile = await db.updateItem(profileId, profileModel, profileInfo)
     }
 
     if (!user) {
-      utils.buildErrObject(422, 'NOT_FOUND')
+      utils.buildErrObject(422, 'USER_NOT_FOUND')
+    }
+    if (!userProfile) {
+      utils.buildErrObject(422, 'USER_PROFILE_NOT_FOUND')
     }
 
-    if (req.password) {
-      user.password = req.password
-    }
+    // if (req.password) {
+    //   user.password = req.password
+    // }
+
     await user.save()
+    await userProfile.save()
 
-    res.status(200).json(user)
+    // res.status(200).json(user)
+    res.status(200).json(await db.getItem(id, model, 'userProfileId'))
+
   } catch (error) {
     utils.handleError(res, error)
   }
