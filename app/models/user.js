@@ -55,14 +55,87 @@ const UserSchema = new mongoose.Schema(
       default: Date.now,
       select: false
     },
-    userProfileId: {
-      type: mongoose.Schema.ObjectId,
-      ref: 'UserProfile'
-    },
     publisherKey: {
       type: String,
       required: true,
       unique: true
+    },
+    
+    // User Profile
+    companyName: {
+      type: String,
+      required: true
+    },
+    companyLogo: {
+      type: String
+    },
+    application: {
+      type: String,
+      required: true
+    },
+    currencyName: {
+      type: String
+    },
+    productIcon: {
+      type: String
+    },
+    installer: {
+      type: String
+    },
+    userPercentage: {
+      type: Number,
+      default: 0.0
+    },
+    numberOfVirtualCoins: {
+      type: Number,
+      default: 0
+    },
+    contact: {
+      type: String,
+      required: true
+    },
+    country: {
+      type: String
+    },
+    instantMessenger: {
+      type: String
+    },
+    website: {
+      type: String,
+      required: true
+    },
+    moreInformation: {
+      type: String
+    },
+    
+    //Profile Info
+    installs: {
+      type: Number,
+      default: 0
+    },
+    uninstalls: {
+      type: Number,
+      default: 0
+    },
+    live: {
+      type: Number,
+      default: 0
+    },
+    liveTime: {
+      type: Number,
+      default: 0
+    },
+    earnings: {
+      type: Number,
+      default: 0
+    },
+    referrals: {
+      type: Number,
+      default: 0
+    },
+    payments: {
+      type: Number,
+      default: 0
     }
   },
   {

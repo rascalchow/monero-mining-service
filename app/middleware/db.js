@@ -45,12 +45,7 @@ const cleanPaginationID = result => {
   result.docs.map(element => delete element.id)
   return result
 }
-
-/**
- * Builds initial options for query
- * @param {Object} query - query object
- */
-const listInitOptions = async req => {
+const listInitOptions = req => {
   return new Promise(resolve => {
     const order = req.query.order || -1
     const sort = req.query.sort || 'createdAt'
@@ -58,13 +53,14 @@ const listInitOptions = async req => {
     const page = parseInt(req.query.page, 10) || 1
     const limit = parseInt(req.query.limit, 10) || 5
     const populate = buildPopulate(req.query.populate)
-
+    const search = JSON.parse(req.query.filter)['search']
     const options = {
       select: req.query.fields,
       sort: sortBy,
       lean: true,
       page,
-      limit
+      limit,
+      search
     }
 
     if (populate) {
@@ -73,6 +69,10 @@ const listInitOptions = async req => {
     resolve(options)
   })
 }
+/**
+ * Builds initial options for query
+ * @param {Object} query - query object
+ */
 
 module.exports = {
   /**

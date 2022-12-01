@@ -1,4 +1,4 @@
-const model = require('../models/userProfile')
+const model = require('../models/user')
 const fs = require('fs')
 const path = require('path')
 const utils = require('../middleware/utils')
@@ -14,7 +14,7 @@ const { FILE_UPLOAD_DIR } = require('../consts')
  */
 exports.get = async (req, res) => {
   try {
-    const product = await model.findById(req.user.userProfileId)
+    const product = await model.findById(req.user._id)
     utils.handleSuccess(res, 200, product)
   } catch (error) {
     utils.handleErrorV2(res, error)
@@ -30,8 +30,9 @@ exports.update = async (req, res) => {
   try {
     const data = matchedData(req)
     const { companyLogo, productIcon } = req.files
-    const product = await model.findById(req.user.userProfileId)
-
+    const product = await model
+      .findById(req.user._id)
+      .select('companyName companyLogo application currencyName productIcon')
     const dirPath = utils.resolveUploadPath(req.user.publisherKey)
 
     const imgPath = {}
@@ -90,7 +91,7 @@ exports.update = async (req, res) => {
       await model.findByIdAndUpdate(
         product._id,
         {
-          productName: data.productName,
+          application: data.productName,
           currencyName: data.currencyName,
           userPercentage: data.userPercentage,
           numberOfVirtualCoins: data.numberOfVirtualCoins,

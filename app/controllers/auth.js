@@ -270,28 +270,20 @@ const registerUser = async req => {
   try {
     const publisherKey = await generatePubliserKey()
 
-    const userProfile = new UserProfile({
-      ...req.userProfile,
-      installer: utils.crupdateMsi(
-        publisherKey,
-        req.userProfile.companyName,
-        req.userProfile.application
-      )
-    })
-    await userProfile.save()
     const user = await User.create({
-      name: req.name,
-      email: req.email,
-      phone: req.phone,
-      password: req.password,
+      ...req,
       staffId: req.staffId,
       verification: uuid.v4(),
-      userProfileId: userProfile.id,
-      publisherKey
+      publisherKey,
+      installer: utils.crupdateMsi(
+        publisherKey,
+        req.companyName,
+        req.application
+      )
     })
     const eulaTemplate = (await AppConfig.findOne({ type: 'EULA' })).data.eula
-      .replace(/{{companyName}}/g, req.userProfile.companyName)
-      .replace(/{{productName}}/g, req.userProfile.application)
+      .replace(/{{companyName}}/g, req.companyName)
+      .replace(/{{productName}}/g, req.application)
 
     await UserEula.create({
       publisherId: user._id,
@@ -478,6 +470,7 @@ const checkPermissions = async (data, next) => {
     User.findById(data.id, (err, result) => {
       utils.itemNotFound(err, result, reject, 'NOT_FOUND')
       if (data.roles.indexOf(result.role) > -1) {
+        console.log('checkPermissions==========>')
         return resolve(next())
       }
       return reject(utils.buildErrObject(401, 'UNAUTHORIZED'))

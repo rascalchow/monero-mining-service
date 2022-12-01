@@ -1,10 +1,11 @@
 const model = require('../models/user')
+const profileModel = require('../models/userProfile')
 const uuid = require('uuid')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
 const db = require('../middleware/db')
 const emailer = require('../middleware/emailer')
-
+const { listInitOptions } = require('../middleware/db')
 /*********************
  * Private functions *
  *********************/
@@ -54,11 +55,41 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
-    const processQuery = opt => {
-      opt.populate = ['userProfileId']
-      return opt
+    const sortKey = [
+      'name',
+      'email',
+      'companyName',
+      'status',
+      'installs',
+      'live',
+      'liveTime',
+      'earnings',
+      'referrals',
+      'payments'
+    ]
+    if (query.search) {
+      const search = query.search
+      delete query.search
+      query['$or'] = [
+        { name: { $regex: `.*${search}.*` } },
+        { email: { $regex: `.*${search}.*` } },
+        { companyName: { $regex: `.*${search}.*` } }
+      ]
     }
-    res.status(200).json(await db.getItems(req, model, query, processQuery))
+    let sort = null
+    sortKey.forEach(key => {
+      if (query[key]) {
+        sort = { [key]: query[key] }
+        delete query[key]
+      }
+    })
+    const processQuery = opt => {
+      opt.collation = { locale: 'en' }
+      return { ...opt, sort }
+    }
+
+    const data = await db.getItems(req, model, query, processQuery)
+    res.status(200).json(data)
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -87,9 +118,7 @@ exports.getItem = async (req, res) => {
 exports.updateItem = async (req, res) => {
   try {
     req = matchedData(req)
-    console.log(req)
     const id = await utils.isIDGood(req.id)
-
     let user = null
 
     const doesEmailExists = await emailer.emailExistsExcludingMyself(
@@ -101,15 +130,10 @@ exports.updateItem = async (req, res) => {
     }
 
     if (!user) {
-      utils.buildErrObject(422, 'NOT_FOUND')
-    }
-
-    if (req.password) {
-      user.password = req.password
+      utils.buildErrObject(422, 'USER_NOT_FOUND')
     }
     await user.save()
-
-    res.status(200).json(user)
+    res.status(200).json(await db.getItem(id, model, null))
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -172,5 +196,29 @@ exports.rejectUser = async (req, res) => {
     res.status(200).json(await db.updateItem(id, model, { status: 'rejected' }))
   } catch (error) {
     utils.handleError(res, error)
+  }
+}
+
+const processUsers = (users, opt) => {
+  let totalDocs = users.length
+  let limit = opt.limit
+  let totalPages = Math.ceil(totalDocs / limit)
+  let page = opt.page
+  // let pagingCounter = 1
+  let hasPrevPage = page > 1 ? true : false
+  let hasNextPage = page < totalPages ? true : false
+  let prevPage = hasPrevPage ? page - 1 : null
+  let nextPage = hasNextPage ? page + 1 : null
+
+  return {
+    docs: users.splice((page - 1) * limit, limit),
+    totalDocs,
+    limit,
+    totalPages,
+    page,
+    hasPrevPage,
+    hasNextPage,
+    nextPage,
+    prevPage
   }
 }
