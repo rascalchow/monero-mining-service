@@ -55,17 +55,17 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
-    var search = ''
+    let search = ''
     if (query.search) {
       search = query.search
       delete query.search
     }
 
-    const sortKey = ['name', 'email', 'companyName']
-    var sort =null
-    sortKey.forEach(key =>{
+    const sortKey = ['name', 'email', 'companyName', 'status']
+    let sort = null
+    sortKey.forEach(key => {
       if (query[key]) {
-        sort = {[key]: query[key]}
+        sort = { [key]: query[key] }
         delete query[key]
       }
     })
@@ -79,29 +79,41 @@ exports.getItems = async (req, res) => {
       .find(query)
       .populate('userProfileId')
       .sort(processedOpt.sort)
-
-    //** Sort Users 
-    sortKey.forEach(key=>{
-      if (sort && sort[key]=='asc'){
+      
+    //** Sort Users
+    sortKey.forEach(key => {
+      if (sort && sort[key] == 'asc') {
         allUsers.sort((a, b) => {
-          if (key == 'name' || key == 'email')  return a[key].toLowerCase().localeCompare(b[key].toLowerCase());
-          else return a['userProfileId'][key].toLowerCase().localeCompare(b['userProfileId'][key].toLowerCase());
+          if (key == 'name' || key == 'email' || key == 'status')
+            return a[key].toLowerCase().localeCompare(b[key].toLowerCase())
+          else
+            return a['userProfileId'][key]
+              .toLowerCase()
+              .localeCompare(b['userProfileId'][key].toLowerCase())
         })
-      }else if (sort&& sort[key]=='desc'){
+      } else if (sort && sort[key] == 'desc') {
         allUsers.sort((a, b) => {
-          if (key == 'name' || key == 'email')  return b[key].toLowerCase().localeCompare(a[key].toLowerCase());
-          else return b['userProfileId'][key].toLowerCase().localeCompare(a['userProfileId'][key].toLowerCase());
+          if (key == 'name' || key == 'email' || key == 'status')
+            return b[key].toLowerCase().localeCompare(a[key].toLowerCase())
+          else
+            return b['userProfileId'][key]
+              .toLowerCase()
+              .localeCompare(a['userProfileId'][key].toLowerCase())
         })
       }
     })
     //**/
-    // console.log('allUsers------->', allUsers)
-    //** Filter Searched Users 
-    var filteredUsers = allUsers
+
+    //** Filter Searched Users
+    let filteredUsers = allUsers
     if (search !== '') {
       const reg = new RegExp(`${search}`)
       filteredUsers = allUsers.filter((user, index) => {
-        if (reg.test(user.name) || reg.test(user.email) || (user.userProfileId && reg.test(user.userProfileId.companyName))) {
+        if (
+          reg.test(user.name) ||
+          reg.test(user.email) ||
+          (user.userProfileId && reg.test(user.userProfileId.companyName))
+        ) {
           return true
         }
         return false
@@ -138,7 +150,6 @@ exports.getItem = async (req, res) => {
  * @param {Object} res - response object
  */
 exports.updateItem = async (req, res) => {
-
   var profileInfo = req.body
   delete profileInfo.name
   delete profileInfo.email
@@ -155,7 +166,11 @@ exports.updateItem = async (req, res) => {
     if (!doesEmailExists) {
       user = await db.updateItem(id, model, req)
       let profileId = user.userProfileId
-      var userProfile = await db.updateItem(profileId, profileModel, profileInfo)
+      var userProfile = await db.updateItem(
+        profileId,
+        profileModel,
+        profileInfo
+      )
     }
 
     if (!user) {
@@ -174,7 +189,6 @@ exports.updateItem = async (req, res) => {
 
     // res.status(200).json(user)
     res.status(200).json(await db.getItem(id, model, 'userProfileId'))
-
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -239,7 +253,6 @@ exports.rejectUser = async (req, res) => {
     utils.handleError(res, error)
   }
 }
-
 
 const processUsers = (users, opt) => {
   let totalDocs = users.length

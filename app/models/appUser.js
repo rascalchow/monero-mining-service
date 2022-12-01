@@ -17,6 +17,28 @@ const AppUserSchema = new mongoose.Schema(
     version: {
       type: String
     },
+    device: {
+      type: String
+    },
+    operatingSystem:{
+      type: String
+    },
+    liveTime: {
+      type: Number,
+      default:0
+    },
+    timeRatio: {
+      type: Number,
+      default: 0
+    },
+    currencyEarned: {
+      type: Number,
+      default: 0
+    },
+    currencySpent: {
+      type: Number,
+      default: 0
+    },
     publisherKey: {
       type: String,
       required: true

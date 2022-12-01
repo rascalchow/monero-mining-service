@@ -13,6 +13,16 @@ const AppUserSessionSchema = new mongoose.Schema(
     },
     endAt: {
       type: Date
+    },
+    userId: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'AppUser',
+      required: true
+    },
+    publisherId: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+      required: true
     }
   },
   {
