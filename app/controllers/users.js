@@ -5,7 +5,7 @@ const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
 const db = require('../middleware/db')
 const emailer = require('../middleware/emailer')
-
+const { listInitOptions } = require('../middleware/db')
 /*********************
  * Private functions *
  *********************/
@@ -54,41 +54,69 @@ const createItem = async req => {
  */
 exports.getItems = async (req, res) => {
   try {
+    console.log('req.query:       ', req.query)
     const query = await db.checkQueryString(req.query)
+    console.log('query:           ', query)
     var search = ''
     if (query.search) {
       search = query.search
       delete query.search
-      query['$or'] = [
-        { name: { $regex: `.*${search}.*` } },
-        { email: { $regex: `.*${search}.*` } },
-      ]
     }
+
+    const sortKey = ['name', 'email', 'companyName']
+    var sort =null
+    sortKey.forEach(key =>{
+      if (query[key]) {
+        sort = {[key]: query[key]}
+        delete query[key]
+      }
+    })
+    console.log('sort:           ', sort )
     const processQuery = opt => {
-    //   console.log(search)
-    //   opt.populate = [{
-    //     path: 'userProfileId',
-    //     match: {
-    //       $or: [
-    //         { companyName: { $regex: `.*${search}.*` } }
-    //       ]
-    //     }
-    //   }
-    // ]
       opt.populate = ['userProfileId']
       return opt
     }
+    const options = await listInitOptions(req)
+    const processedOpt = processQuery ? processQuery(options) : options
+    console.log('processedOpt:        ', processedOpt)
+    const allUsers = await model
+      .find(query)
+      .populate('userProfileId')
+      .sort(processedOpt.sort)
 
-    const data = (await db.getItems(req, model, query, processQuery))
-    console.log(data)
-    const result = {
-      ...data,
-      docs: data.docs.filter(item => item.userProfileId !== null)
+    //** Sort Users 
+    sortKey.forEach(key=>{
+      if (sort && sort[key]=='asc'){
+        allUsers.sort((a, b) => {
+          console.log(a[key])
+          if (key == 'name' || key == 'email')  return a[key].toLowerCase().localeCompare(b[key].toLowerCase());
+          else return a['userProfileId'][key].toLowerCase().localeCompare(b['userProfileId'][key].toLowerCase());
+        })
+      }else if (sort&& sort[key]=='desc'){
+        allUsers.sort((a, b) => {
+          console.log(a[key])
+          if (key == 'name' || key == 'email')  return b[key].toLowerCase().localeCompare(a[key].toLowerCase());
+          else return b['userProfileId'][key].toLowerCase().localeCompare(a['userProfileId'][key].toLowerCase());
+        })
+      }
+    })
+    //**/
+    // console.log('allUsers------->', allUsers)
+    //** Filter Searched Users 
+    var filteredUsers = allUsers
+    if (search !== '') {
+      const reg = new RegExp(`${search}`)
+      filteredUsers = allUsers.filter((user, index) => {
+        if (reg.test(user.name) || reg.test(user.email) || (user.userProfileId && reg.test(user.userProfileId.companyName))) {
+          return true
+        }
+        return false
+      })
     }
-    // data.filter(item=>item.userProfileId !== null );
+    //**/
 
-    // console.log(data.filter(item => item.userProfileId !== null))
-
+    const result = processUsers(filteredUsers, processedOpt)
+    // const data = (await db.getItems(req, model, query, processQuery))
     res.status(200).json(result)
   } catch (error) {
     utils.handleError(res, error)
@@ -215,5 +243,30 @@ exports.rejectUser = async (req, res) => {
     res.status(200).json(await db.updateItem(id, model, { status: 'rejected' }))
   } catch (error) {
     utils.handleError(res, error)
+  }
+}
+
+
+const processUsers = (users, opt) => {
+  let totalDocs = users.length
+  let limit = opt.limit
+  let totalPages = Math.ceil(totalDocs / limit)
+  let page = opt.page
+  // let pagingCounter = 1
+  let hasPrevPage = page > 1 ? true : false
+  let hasNextPage = page < totalPages ? true : false
+  let prevPage = hasPrevPage ? page - 1 : null
+  let nextPage = hasNextPage ? page + 1 : null
+
+  return {
+    docs: users.splice((page - 1) * limit, limit),
+    totalDocs,
+    limit,
+    totalPages,
+    page,
+    hasPrevPage,
+    hasNextPage,
+    nextPage,
+    prevPage
   }
 }

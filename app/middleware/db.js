@@ -50,32 +50,33 @@ const cleanPaginationID = result => {
  * Builds initial options for query
  * @param {Object} query - query object
  */
-const listInitOptions = async req => {
-  return new Promise(resolve => {
-    const order = req.query.order || -1
-    const sort = req.query.sort || 'createdAt'
-    const sortBy = buildSort(sort, order)
-    const page = parseInt(req.query.page, 10) || 1
-    const limit = parseInt(req.query.limit, 10) || 5
-    const populate = buildPopulate(req.query.populate)
-    const search = JSON.parse(req.query.filter)['search']
-    const options = {
-      select: req.query.fields,
-      sort: sortBy,
-      lean: true,
-      page,
-      limit,
-      search
-    }
 
-    if (populate) {
-      options.populate = populate
-    }
-    resolve(options)
-  })
-}
 
 module.exports = {
+  async listInitOptions(req) {
+    return new Promise(resolve => {
+      const order = req.query.order || -1
+      const sort = req.query.sort || 'createdAt'
+      const sortBy = buildSort(sort, order)
+      const page = parseInt(req.query.page, 10) || 1
+      const limit = parseInt(req.query.limit, 10) || 5
+      const populate = buildPopulate(req.query.populate)
+      const search = JSON.parse(req.query.filter)['search']
+      const options = {
+        select: req.query.fields,
+        sort: sortBy,
+        lean: true,
+        page,
+        limit,
+        search
+      }
+  
+      if (populate) {
+        options.populate = populate
+      }
+      resolve(options)
+    })
+  },
   /**
    * Checks the query string for filtering records
    * query.filter should be the text to search (string)
@@ -110,8 +111,6 @@ module.exports = {
   async getItems(req, model, query, processQuery) {
     const options = await listInitOptions(req)
     const processedOpt = processQuery ? processQuery(options) : options
-    console.log('processedOpt--------->',processedOpt)
-    console.log('query----------->',query)
     return new Promise((resolve, reject) => {
       model.paginate(query, processedOpt, (err, items) => {
         if (err) {
