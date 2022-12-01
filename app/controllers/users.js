@@ -54,9 +54,7 @@ const createItem = async req => {
  */
 exports.getItems = async (req, res) => {
   try {
-    console.log('req.query:       ', req.query)
     const query = await db.checkQueryString(req.query)
-    console.log('query:           ', query)
     var search = ''
     if (query.search) {
       search = query.search
@@ -71,14 +69,12 @@ exports.getItems = async (req, res) => {
         delete query[key]
       }
     })
-    console.log('sort:           ', sort )
     const processQuery = opt => {
       opt.populate = ['userProfileId']
       return opt
     }
     const options = await listInitOptions(req)
     const processedOpt = processQuery ? processQuery(options) : options
-    console.log('processedOpt:        ', processedOpt)
     const allUsers = await model
       .find(query)
       .populate('userProfileId')
@@ -88,13 +84,11 @@ exports.getItems = async (req, res) => {
     sortKey.forEach(key=>{
       if (sort && sort[key]=='asc'){
         allUsers.sort((a, b) => {
-          console.log(a[key])
           if (key == 'name' || key == 'email')  return a[key].toLowerCase().localeCompare(b[key].toLowerCase());
           else return a['userProfileId'][key].toLowerCase().localeCompare(b['userProfileId'][key].toLowerCase());
         })
       }else if (sort&& sort[key]=='desc'){
         allUsers.sort((a, b) => {
-          console.log(a[key])
           if (key == 'name' || key == 'email')  return b[key].toLowerCase().localeCompare(a[key].toLowerCase());
           else return b['userProfileId'][key].toLowerCase().localeCompare(a['userProfileId'][key].toLowerCase());
         })
