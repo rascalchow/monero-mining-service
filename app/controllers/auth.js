@@ -270,28 +270,20 @@ const registerUser = async req => {
   try {
     const publisherKey = await generatePubliserKey()
 
-    const userProfile = new UserProfile({
-      ...req.userProfile,
-      installer: utils.crupdateMsi(
-        publisherKey,
-        req.userProfile.companyName,
-        req.userProfile.application
-      )
-    })
-    await userProfile.save()
     const user = await User.create({
-      name: req.name,
-      email: req.email,
-      phone: req.phone,
-      password: req.password,
+      ...req,
       staffId: req.staffId,
       verification: uuid.v4(),
-      userProfileId: userProfile.id,
-      publisherKey
+      publisherKey,
+      installer: utils.crupdateMsi(
+        publisherKey,
+        req.companyName,
+        req.application
+      )
     })
     const eulaTemplate = (await AppConfig.findOne({ type: 'EULA' })).data.eula
-      .replace(/{{companyName}}/g, req.userProfile.companyName)
-      .replace(/{{productName}}/g, req.userProfile.application)
+      .replace(/{{companyName}}/g, req.companyName)
+      .replace(/{{productName}}/g, req.application)
 
     await UserEula.create({
       publisherId: user._id,
@@ -661,7 +653,6 @@ exports.roleAuthorization = roles => async (req, res, next) => {
       id: req.user._id,
       roles
     }
-    console.log('roleAuthorization========>', data)
     await checkPermissions(data, next)
   } catch (error) {
     utils.handleError(res, error)
@@ -672,7 +663,6 @@ exports.roleAuthorization = roles => async (req, res, next) => {
  * Approval function called by route
  */
 exports.requireApproval = (req, res, next) => {
-  console.log('requireApproval===========>')
   try {
     checkUserIsApproved(req.user)
     next()

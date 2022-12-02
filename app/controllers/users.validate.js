@@ -102,6 +102,49 @@ exports.updateItem = [
     .not()
     .isEmpty()
     .withMessage('IS_EMPTY'),
+  check('companyName')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+
+  check('application')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('contact')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('country')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('website')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('moreInformation')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('instantMessenger')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
   (req, res, next) => {
     validationResult(req, res, next)
   }
