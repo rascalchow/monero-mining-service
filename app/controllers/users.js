@@ -55,7 +55,18 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
-    const sortKey = ['name', 'email', 'companyName', 'status']
+    const sortKey = [
+      'name',
+      'email',
+      'companyName',
+      'status',
+      'installs',
+      'live',
+      'liveTime',
+      'earnings',
+      'referrals',
+      'payments'
+    ]
     if (query.search) {
       const search = query.search
       delete query.search
