@@ -28,6 +28,27 @@ router.get(
 )
 
 /*
+ * Get installed data route
+ */
+router.get(
+  '/installs/:id',
+  requireAuth,
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  trimRequest.all,
+  controller.getInstallsInfo
+)
+
+router.get(
+  '/',
+  requireAuth,
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  trimRequest.all,
+  controller.getItems
+)
+
+/*
  * Create new item route
  */
 router.post(
