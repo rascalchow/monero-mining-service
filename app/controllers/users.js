@@ -1,4 +1,5 @@
 const model = require('../models/user')
+const appUserModel = require('../models/appUser')
 const profileModel = require('../models/userProfile')
 const uuid = require('uuid')
 const { matchedData } = require('express-validator')
@@ -199,26 +200,90 @@ exports.rejectUser = async (req, res) => {
   }
 }
 
-const processUsers = (users, opt) => {
-  let totalDocs = users.length
-  let limit = opt.limit
-  let totalPages = Math.ceil(totalDocs / limit)
-  let page = opt.page
-  // let pagingCounter = 1
-  let hasPrevPage = page > 1 ? true : false
-  let hasNextPage = page < totalPages ? true : false
-  let prevPage = hasPrevPage ? page - 1 : null
-  let nextPage = hasNextPage ? page + 1 : null
-
-  return {
-    docs: users.splice((page - 1) * limit, limit),
-    totalDocs,
-    limit,
-    totalPages,
-    page,
-    hasPrevPage,
-    hasNextPage,
-    nextPage,
-    prevPage
+exports.getAppUserInfo = async (req, res) => {
+  const { param, type } = req.query
+  const { id } = req.params
+  const query = {
+    $exists: true,
+    $gte: new Date(param[0]),
+    $lte: new Date(param[1])
+  }
+  try {
+    const result = await appUserModel.find({
+      publisherId: id,
+      status: type,
+      installedAt: query
+    })
+    return res.status(200).json({
+      info: result,
+      count: filterAppUserInfo(result, param)
+    })
+  } catch (error) {
+    throw buildErrObject(422, err.message)
   }
 }
+
+const filterAppUserInfo = (installs, dates) => {
+  const DAY = 86400000
+  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
+  const now = new Date()
+  let result = []
+  for (let i = 0; i < duration; i++) {
+    let count = installs.filter(it => {
+      let current = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i
+      )
+      const { installedAt } = it
+      if (
+        installedAt.getFullYear() == current.getFullYear() &&
+        installedAt.getMonth() == current.getMonth() &&
+        installedAt.getDate() == current.getDate()
+      ) {
+        return true
+      }
+      return false
+    }).length
+    result[i] = count
+    count = 0
+  }
+  return result
+}
+// const processInstalls = (installs, item) => {
+//   const duration = item.type == 'day' ? item.value : item.value * 30
+//   const now = new Date()
+//   let result = []
+//   for (let i = 0; i < duration; i++) {
+//     let current = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+//     let count = installs.filter(it => {
+//       const { installedAt } = it
+//       if (
+//         installedAt.getFullYear() == current.getFullYear() &&
+//         installedAt.getMonth() == current.getMonth() &&
+//         installedAt.getDate() == current.getDate()
+//       ) {
+//         return true
+//       }
+//       return false
+//     }).length
+//     result[i] = count
+//   }
+//   return result
+// }
+
+// const handleDuration = date => {
+//   let now = new Date()
+//   if (date) {
+//     if (date.type == 'day')
+//       return new Date(
+//         now.getFullYear(),
+//         now.getMonth(),
+//         now.getDate() - date.value
+//       )
+//     else if (date.type == 'month')
+//       return new Date(now.getFullYear(), now.getMonth() - date.value)
+//     else return now
+//   }
+//   return now
+// }
