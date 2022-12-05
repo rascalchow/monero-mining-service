@@ -31,12 +31,12 @@ router.get(
  * Get installed data route
  */
 router.get(
-  '/installs/:id',
+  '/appUserInfo/:id',
   requireAuth,
   AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
   trimRequest.all,
-  controller.getInstallsInfo
+  controller.getAppUserInfo
 )
 
 router.get(
