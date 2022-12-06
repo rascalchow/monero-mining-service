@@ -55,6 +55,7 @@ const createItem = async req => {
  */
 exports.getItems = async (req, res) => {
   try {
+    console.log(req.query)
     const query = await db.checkQueryString(req.query)
     const sortKey = [
       'name',
@@ -68,6 +69,7 @@ exports.getItems = async (req, res) => {
       'referrals',
       'payments'
     ]
+    console.log(query)
     if (query.search) {
       const search = query.search
       delete query.search
