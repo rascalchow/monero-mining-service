@@ -115,7 +115,7 @@ module.exports = {
     const processedOpt = processQuery ? processQuery(options) : options
     return new Promise((resolve, reject) => {
       model.paginate(query, processedOpt, (err, items) => {
-        if (err) {
+        if (err || !items) {
           reject(buildErrObject(422, err.message))
         }
         resolve(cleanPaginationID(items))
