@@ -85,7 +85,7 @@ module.exports = {
     return new Promise((resolve, reject) => {
       try {
         if (typeof query.filter !== 'undefined') {
-          if (query.filter === '' || typeof query.filter === 'object') {
+          if (query.filter === '' || query.filter === '{}') {
             return resolve({})
           }
           const filter = JSON.parse(query.filter)
@@ -113,7 +113,6 @@ module.exports = {
         if (err) {
           reject(buildErrObject(422, err.message))
         }
-        console.log(items)
         resolve(cleanPaginationID(items))
       })
     })

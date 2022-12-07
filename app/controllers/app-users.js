@@ -148,29 +148,20 @@ exports.getAppStats = async (req, res) => {
  * @param {Object} res - response object
  */
 exports.getAppUsers = async (req, res) => {
-  const {id} = req.params
+  const { id } = req.params
   const query = await db.checkQueryString(req.query)
-  const sortKey = [
-    'userKey',
-    'device',
-    'operatingSystem',
-    'liveTime',
-    'timeRatio',
-    'currencyEarned',
-    'currencySpent',
-  ] 
   if (query.search) {
     const search = query.search
     delete query.search
     query['$or'] = [
-      { device: { $regex: `.*${search}.*` } },
-      { userKey: { $regex: `.*${search}.*` } },
-      { operatingSystem: { $regex: `.*${search}.*` } }
+      { device: { $regex: `.*${search}.*`, $options: 'i' } },
+      { userKey: { $regex: `.*${search}.*`, $options: 'i' } },
+      { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
     ]
   }
   query.publisherId = id
   let sort = null
-  sortKey.forEach(key => {
+  CONSTS.APP_USER.SORT_KEY.forEach(key => {
     if (query[key]) {
       sort = { [key]: query[key] }
       delete query[key]
@@ -183,5 +174,4 @@ exports.getAppUsers = async (req, res) => {
 
   const data = await db.getItems(req, AppUser, query, processQuery)
   res.status(200).json(data)
-
 }

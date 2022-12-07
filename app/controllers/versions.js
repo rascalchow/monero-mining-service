@@ -10,9 +10,13 @@ const utils = require('../middleware/utils')
  * Create or update a item in database
  * @param {string} version - version string
  */
-const upsertItem = async (version) => {
+const upsertItem = async version => {
   try {
-    return await Version.findOneAndUpdate({ version }, { version }, { upsert: true, new: true });
+    return await Version.findOneAndUpdate(
+      { version },
+      { version },
+      { upsert: true, new: true }
+    )
   } catch (error) {
     throw utils.buildErrObject(400, error.message)
   }
@@ -24,7 +28,7 @@ const upsertItem = async (version) => {
 const getLatestitem = async () => {
   let doc = null
   try {
-    doc = await Version.find({}, {}, { sort: { 'updatedAt': -1 } })
+    doc = await Version.find({}, {}, { sort: { updatedAt: -1 } })
   } catch (error) {
     throw utils.buildErrObject(500, error.message)
   }
