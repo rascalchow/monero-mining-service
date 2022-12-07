@@ -58,6 +58,7 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
+    console.log(query)
     if (query.search) {
       const search = query.search
       delete query.search
@@ -67,15 +68,21 @@ exports.getItems = async (req, res) => {
         { companyName: { $regex: `.*${search}.*`, $options: 'i' } }
       ]
     }
-    let sort = null
+
+    let sort = {}
     CONSTS.PUBLISHER.SORT_KEY.forEach(key => {
-      if (query[key]) {
+      if (query[key] && key !== 'status') {
         sort = { [key]: query[key] }
         delete query[key]
       }
     })
+
     const processQuery = opt => {
       opt.collation = { locale: 'en' }
+      if (query['stat']) {
+        sort['status'] = query['stat']
+        delete query.stat
+      }
       return { ...opt, sort }
     }
 
