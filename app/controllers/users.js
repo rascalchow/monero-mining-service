@@ -58,7 +58,6 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
-    console.log(query)
     if (query.search) {
       const search = query.search
       delete query.search
