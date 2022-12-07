@@ -60,7 +60,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true
     },
-    
+
     // User Profile
     companyName: {
       type: String,
@@ -107,7 +107,7 @@ const UserSchema = new mongoose.Schema(
     moreInformation: {
       type: String
     },
-    
+
     //Profile Info
     installs: {
       type: Number,
@@ -134,6 +134,10 @@ const UserSchema = new mongoose.Schema(
       default: 0
     },
     payments: {
+      type: Number,
+      default: 0
+    },
+    totalDuration: {
       type: Number,
       default: 0
     }

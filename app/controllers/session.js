@@ -1,25 +1,43 @@
 const { matchedData } = require('express-validator')
 const AppUserSession = require('../models/appUserSession')
+const AppUser = require('../models/appUser')
+const User = require('../models/user')
 const utils = require('../middleware/utils')
 const mongoose = require('mongoose')
+const moment = require('moment')
 /********************
  * Public functions *
  ********************/
 
 /**
- * Get item function called by route
+ * Post start running function called by route
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
 exports.startRunning = async (req, res) => {
   try {
     req = matchedData(req)
-    await AppUserSession.updateMany(
-      { userKey: req.userKey, endAt: null },
-      { endAt: new Date() }
-    )
-
+    // await AppUserSession.updateMany(
+    //   { userKey: req.userKey, endAt: null },
+    //   { endAt: new Date() }
+    // )
+    const appUser = await AppUser.findOne({ userKey: req.userKey })
+    req = {
+      ...req,
+      userId: appUser._id,
+      publisherId: appUser.publisherId
+    }
     session = await AppUserSession.create(req)
+    // increment live numbers to user
+    try {
+      await User.findByIdAndUpdate(
+        appUser.publisherId,
+        { $inc: { live: 1 } },
+        { upsert: true }
+      )
+    } catch (error) {
+      utils.handleError(res, error)
+    }
     utils.handleSuccess(res, 201, session._id)
   } catch (error) {
     utils.handleErrorV2(res, error)
@@ -27,15 +45,15 @@ exports.startRunning = async (req, res) => {
 }
 
 /**
- * Get item function called by route
+ * Post end running function called by route
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
 exports.endRunning = async (req, res) => {
   try {
-    req = matchedData(req)
-    if (req.sessionId) {
-      let session = await AppUserSession.findById(req.sessionId)
+    const sessionId = req.body['sessionId']
+    if (sessionId) {
+      let session = await AppUserSession.findById(sessionId)
       if (!session) {
         throw utils.buildErrObject(400, 'SESSION_ID_DOES_NOT_EXISTS')
       } else {
@@ -43,7 +61,13 @@ exports.endRunning = async (req, res) => {
           throw utils.buildErrObject(400, 'SESSION_IS_ALREADY_ENDED')
         }
         session.endAt = new Date()
+        // set duration to terminated session
+        const start = moment(session.startAt)
+        const end = moment(session.endAt)
+        const duration = end.diff(start, 'seconds')
+        session.duration = duration //
         await session.save()
+        onSessionEnded(session)
       }
     } else {
       await AppUserSession.updateMany(
@@ -54,6 +78,59 @@ exports.endRunning = async (req, res) => {
     utils.handleSuccess(res, 203)
   } catch (error) {
     utils.handleErrorV2(res, error)
+  }
+}
+/**
+ * Post running now function called by route
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.runningNow = async (req, res) => {
+  const sessionId = req.body['sessionId']
+  if (sessionId) {
+    //update lastSeen
+    await AppUserSession.findByIdAndUpdate(
+      { sessionId },
+      {
+        lastSeen: new Date()
+      }
+    )
+  } else {
+    //find all sessions lastSeen is older than 10 mins
+    //and update duration
+    const lastTime = moment()
+      .subtract(10, 'minutes')
+      .toISOString()
+    const terminatedSessions = await AppUserSession.find({
+      lastSeen: { $lt: lastTime }
+    })
+    terminatedSessions.forEach(async session => {
+      const start = moment(session.startAt)
+      const end = moment(session.endAt)
+      const duration = end.diff(start, 'seconds')
+      session.duration = duration
+      await session.save()
+      onSessionEnded(session)
+    })
+  }
+}
+
+const onSessionEnded = async session => {
+  // let session = await findById(sessionId)
+  const { userId, publisherId, duration } = session
+  if (!userId || !publisherId) {
+    throw utils.buildErrObject(400, 'INVALID_SESSION')
+  } else {
+    try {
+      await AppUser.findByIdAndUpdate(userId, {
+        $inc: { totalDuration: session.duration } //
+      })
+      await User.findByIdAndUpdate(publisherId, {
+        $inc: { totalDuration: session.duration, live: -1 } //
+      })
+    } catch (error) {
+      throw utils.buildErrObject(422, error.message)
+    }
   }
 }
 
@@ -69,7 +146,6 @@ exports.getLiveTime = async (req, res) => {
   let yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   let lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
   let allTime = new Date(now.getFullYear(), now.getMonth() - 3)
-
   const query = {
     $exists: true,
     $gte: new Date(param[0]),
@@ -163,10 +239,10 @@ exports.getLiveTime = async (req, res) => {
       }
       return res.status(200).json(data)
     } else {
-      throw buildErrObject(400, err.message)
+      throw utils.buildErrObject(400, 'BAD_REQUEST_OF_TYPE')
     }
   } catch (error) {
-    throw buildErrObject(422, err.message)
+    throw utils.buildErrObject(422, error.message)
   }
 }
 

@@ -20,12 +20,12 @@ const AppUserSchema = new mongoose.Schema(
     device: {
       type: String
     },
-    operatingSystem:{
+    operatingSystem: {
       type: String
     },
     liveTime: {
       type: Number,
-      default:0
+      default: 0
     },
     timeRatio: {
       type: Number,
@@ -42,6 +42,10 @@ const AppUserSchema = new mongoose.Schema(
     publisherKey: {
       type: String,
       required: true
+    },
+    totalDuration: {
+      type: Number,
+      default: 0
     },
     publisherId: {
       type: mongoose.Schema.ObjectId,

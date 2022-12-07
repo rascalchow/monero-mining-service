@@ -93,10 +93,20 @@ const uninstall = async req => {
  * @param {Object} res - response object
  */
 exports.install = async (req, res) => {
+  console.log('install')
   try {
     req = matchedData(req)
     const appUser = await installApp(req)
-
+    // increment user installs
+    try {
+      await User.findOneAndUpdate(
+        { publisherKey: req.publisherKey },
+        { $inc: { installs: 1 } },
+        { upsert: true }
+      )
+    } catch (error) {
+      utils.handleError(res, error)
+    }
     utils.handleSuccess(res, 201, appUser)
   } catch (error) {
     utils.handleErrorV2(res, error)
@@ -112,6 +122,17 @@ exports.uninstall = async (req, res) => {
   try {
     req = matchedData(req)
     await uninstall(req)
+    // increment user uninstalls
+    try {
+      await User.findOneAndUpdate(
+        { publisherKey: req.publisherKey },
+        { $inc: { uninstalls: 1 } },
+        { upsert: true }
+      )
+    } catch (error) {
+      utils.handleError(res, error)
+    }
+
     utils.handleSuccess(res, 203)
   } catch (error) {
     utils.handleErrorV2(res, error)
@@ -174,4 +195,55 @@ exports.getAppUsers = async (req, res) => {
 
   const data = await db.getItems(req, AppUser, query, processQuery)
   res.status(200).json(data)
+}
+
+exports.getInstalledUsers = async (req, res) => {
+  const { param, type } = req.query
+  const { id } = req.params
+  const query = {
+    $exists: true,
+    $gte: new Date(param[0]),
+    $lte: new Date(param[1])
+  }
+  try {
+    const result = await AppUser.find({
+      publisherId: id,
+      status: type,
+      installedAt: query
+    })
+    return res.status(200).json({
+      info: result,
+      count: filterAppUserInfo(result, param)
+    })
+  } catch (error) {
+    throw utils.buildErrObject(422, error.message)
+  }
+}
+
+const filterAppUserInfo = (installs, dates) => {
+  const DAY = 86400000
+  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
+  const now = new Date()
+  let result = []
+  for (let i = 0; i < duration; i++) {
+    let count = installs.filter(it => {
+      let current = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i
+      )
+      const { installedAt } = it
+      if (
+        installedAt.getFullYear() == current.getFullYear() &&
+        installedAt.getMonth() == current.getMonth() &&
+        installedAt.getDate() == current.getDate()
+      ) {
+        return true
+      }
+      return false
+    }).length
+    result[i] = count
+    count = 0
+  }
+  return result
 }
