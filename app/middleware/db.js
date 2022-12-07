@@ -85,10 +85,9 @@ module.exports = {
     return new Promise((resolve, reject) => {
       try {
         if (typeof query.filter !== 'undefined') {
-          if (query.filter === '') {
+          if (query.filter === '' || query.filter === '{}') {
             return resolve({})
           }
-
           const filter = JSON.parse(query.filter)
           resolve(filter)
         } else {
@@ -107,6 +106,7 @@ module.exports = {
    * @param {Object} query - query object
    */
   async getItems(req, model, query, processQuery) {
+    console.log(query)
     const options = await listInitOptions(req)
     const processedOpt = processQuery ? processQuery(options) : options
     return new Promise((resolve, reject) => {

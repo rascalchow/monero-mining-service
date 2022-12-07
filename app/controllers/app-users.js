@@ -4,6 +4,7 @@ const Version = require('../models/version')
 const User = require('../models/user')
 const utils = require('../middleware/utils')
 const CONSTS = require('../consts')
+const db = require('../middleware/db')
 
 const USER_KEY_LENGTH = 8
 /*********************
@@ -146,11 +147,31 @@ exports.getAppStats = async (req, res) => {
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
-exports.getDevices = async (req, res) => {
-  try {
-    const devices = await AppUser.find({ publisherId: req.user._id })
-    utils.handleSuccess(res, 200, devices)
-  } catch (error) {
-    utils.handleErrorV2(res, error)
+exports.getAppUsers = async (req, res) => {
+  const { id } = req.params
+  const query = await db.checkQueryString(req.query)
+  if (query.search) {
+    const search = query.search
+    delete query.search
+    query['$or'] = [
+      { device: { $regex: `.*${search}.*`, $options: 'i' } },
+      { userKey: { $regex: `.*${search}.*`, $options: 'i' } },
+      { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
+    ]
   }
+  query.publisherId = id
+  let sort = null
+  CONSTS.APP_USER.SORT_KEY.forEach(key => {
+    if (query[key]) {
+      sort = { [key]: query[key] }
+      delete query[key]
+    }
+  })
+  const processQuery = opt => {
+    opt.collation = { locale: 'en' }
+    return { ...opt, sort }
+  }
+
+  const data = await db.getItems(req, AppUser, query, processQuery)
+  res.status(200).json(data)
 }

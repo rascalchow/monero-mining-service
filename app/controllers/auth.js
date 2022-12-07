@@ -470,7 +470,6 @@ const checkPermissions = async (data, next) => {
     User.findById(data.id, (err, result) => {
       utils.itemNotFound(err, result, reject, 'NOT_FOUND')
       if (data.roles.indexOf(result.role) > -1) {
-        console.log('checkPermissions==========>')
         return resolve(next())
       }
       return reject(utils.buildErrObject(401, 'UNAUTHORIZED'))

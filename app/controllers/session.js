@@ -162,6 +162,8 @@ exports.getLiveTime = async (req, res) => {
         }
       }
       return res.status(200).json(data)
+    } else {
+      throw buildErrObject(400, err.message)
     }
   } catch (error) {
     throw buildErrObject(422, err.message)
