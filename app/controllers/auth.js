@@ -687,7 +687,6 @@ exports.seedAdminUser = async () => {
       application: 'Nurev',
       contact: 'Nurev',
       website: 'Nurev'
-      d
     }
     const user = await User.findOne({
       email: USER.email
