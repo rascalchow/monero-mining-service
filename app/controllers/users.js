@@ -7,6 +7,8 @@ const utils = require('../middleware/utils')
 const db = require('../middleware/db')
 const emailer = require('../middleware/emailer')
 const { listInitOptions } = require('../middleware/db')
+const CONSTS = require('../consts')
+
 /*********************
  * Private functions *
  *********************/
@@ -56,36 +58,30 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
-    const sortKey = [
-      'name',
-      'email',
-      'companyName',
-      'status',
-      'installs',
-      'live',
-      'liveTime',
-      'earnings',
-      'referrals',
-      'payments'
-    ]
     if (query.search) {
       const search = query.search
       delete query.search
       query['$or'] = [
-        { name: { $regex: `.*${search}.*` } },
-        { email: { $regex: `.*${search}.*` } },
-        { companyName: { $regex: `.*${search}.*` } }
+        { name: { $regex: `.*${search}.*`, $options: 'i' } },
+        { email: { $regex: `.*${search}.*`, $options: 'i' } },
+        { companyName: { $regex: `.*${search}.*`, $options: 'i' } }
       ]
     }
-    let sort = null
-    sortKey.forEach(key => {
-      if (query[key]) {
+
+    let sort = {}
+    CONSTS.PUBLISHER.SORT_KEY.forEach(key => {
+      if (query[key] && key !== 'status') {
         sort = { [key]: query[key] }
         delete query[key]
       }
     })
+
     const processQuery = opt => {
       opt.collation = { locale: 'en' }
+      if (query['stat']) {
+        sort['status'] = query['stat']
+        delete query.stat
+      }
       return { ...opt, sort }
     }
 
@@ -118,16 +114,12 @@ exports.getItem = async (req, res) => {
  */
 exports.updateItem = async (req, res) => {
   try {
-    req = matchedData(req)
-    const id = await utils.isIDGood(req.id)
+    const { id } = req.params
+    const { email } = req.body
     let user = null
-
-    const doesEmailExists = await emailer.emailExistsExcludingMyself(
-      id,
-      req.email
-    )
+    const doesEmailExists = await emailer.emailExistsExcludingMyself(id, email)
     if (!doesEmailExists) {
-      user = await db.updateItem(id, model, req)
+      user = await db.updateItem(id, model, req.body)
     }
 
     if (!user) {

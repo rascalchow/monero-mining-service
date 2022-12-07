@@ -22,11 +22,11 @@ const { requireToken } = require('../middleware/device')
  * Install route
  */
 router.get(
-  '/',
+  '/:id',
   requireAuth,
   trimRequest.all,
-  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
-  controller.getDevices
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
+  controller.getAppUsers
 )
 
 /*
