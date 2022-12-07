@@ -53,7 +53,12 @@ const listInitOptions = req => {
     const page = parseInt(req.query.page, 10) || 1
     const limit = parseInt(req.query.limit, 10) || 5
     const populate = buildPopulate(req.query.populate)
-    const search = JSON.parse(req.query.filter)['search']
+    let search = ''
+    try {
+      search = JSON.parse(req.query.filter)['search']
+    } catch (err) {
+      console.log(err)
+    }
     const options = {
       select: req.query.fields,
       sort: sortBy,
