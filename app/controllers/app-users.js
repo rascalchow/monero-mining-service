@@ -175,3 +175,54 @@ exports.getAppUsers = async (req, res) => {
   const data = await db.getItems(req, AppUser, query, processQuery)
   res.status(200).json(data)
 }
+
+exports.getInstalledUsers = async (req, res) => {
+  const { param, type } = req.query
+  const { id } = req.params
+  const query = {
+    $exists: true,
+    $gte: new Date(param[0]),
+    $lte: new Date(param[1])
+  }
+  try {
+    const result = await AppUser.find({
+      publisherId: id,
+      status: type,
+      installedAt: query
+    })
+    return res.status(200).json({
+      info: result,
+      count: filterAppUserInfo(result, param)
+    })
+  } catch (error) {
+    throw utils.buildErrObject(422, error.message)
+  }
+}
+
+const filterAppUserInfo = (installs, dates) => {
+  const DAY = 86400000
+  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
+  const now = new Date()
+  let result = []
+  for (let i = 0; i < duration; i++) {
+    let count = installs.filter(it => {
+      let current = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i
+      )
+      const { installedAt } = it
+      if (
+        installedAt.getFullYear() == current.getFullYear() &&
+        installedAt.getMonth() == current.getMonth() &&
+        installedAt.getDate() == current.getDate()
+      ) {
+        return true
+      }
+      return false
+    }).length
+    result[i] = count
+    count = 0
+  }
+  return result
+}

@@ -106,7 +106,6 @@ module.exports = {
    * @param {Object} query - query object
    */
   async getItems(req, model, query, processQuery) {
-    console.log(query)
     const options = await listInitOptions(req)
     const processedOpt = processQuery ? processQuery(options) : options
     return new Promise((resolve, reject) => {

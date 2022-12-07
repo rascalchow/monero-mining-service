@@ -27,17 +27,6 @@ router.get(
   controller.getItems
 )
 
-/*
- * Get installed data route
- */
-router.get(
-  '/appUserInfo/:id',
-  requireAuth,
-  AuthController.requireApproval,
-  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
-  trimRequest.all,
-  controller.getAppUserInfo
-)
 
 router.get(
   '/',

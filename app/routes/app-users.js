@@ -62,4 +62,25 @@ router.get(
   controller.getAppStats
 )
 
+/*
+ * App User Installed route
+ */
+router.get(
+  '/installed/:id',
+  requireAuth,
+  trimRequest.all,
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
+  controller.getInstalledUsers
+)
+// /*
+//  * Get installed data route
+//  */
+// router.get(
+//   '/appUserInfo/:id',
+//   requireAuth,
+//   AuthController.requireApproval,
+//   AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+//   trimRequest.all,
+//   controller.getAppUserInfo
+// )
 module.exports = router
