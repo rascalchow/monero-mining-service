@@ -682,7 +682,12 @@ exports.seedAdminUser = async () => {
       verification: uuid.v4(),
       role: CONSTS.USER.ROLE.ADMIN,
       status: CONSTS.USER.STATUS.ACTIVE,
-      publisherKey: '00000000'
+      publisherKey: '00000000',
+      companyName: 'Nurev',
+      application: 'Nurev',
+      contact: 'Nurev',
+      website: 'Nurev'
+      d
     }
     const user = await User.findOne({
       email: USER.email
