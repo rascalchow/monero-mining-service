@@ -35,5 +35,11 @@ router.get(
   controller.getLiveTime
 )
 
+router.post(
+  '/running-now',
+  requireToken,
+  trimRequest.all,
+  controller.runningNow
+)
 
 module.exports = router
