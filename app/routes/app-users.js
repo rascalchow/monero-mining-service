@@ -55,7 +55,7 @@ router.post(
  * Get installed/uninstalled app counts
  */
 router.get(
-  '/stats',
+  '/user/stats',
   requireAuth,
   trimRequest.all,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),

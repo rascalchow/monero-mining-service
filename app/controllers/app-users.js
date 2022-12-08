@@ -34,6 +34,7 @@ const generateUserrKey = async () => {
  * @param {Object} req - request object
  */
 const installApp = async req => {
+  console.log(req)
   try {
     const user = await User.findOne({ publisherKey: req.publisherKey })
     if (!user) {
@@ -51,7 +52,7 @@ const installApp = async req => {
       ...req,
       userKey: await generateUserrKey(),
       publisherKey: user.publisherKey,
-      publisherId: user.id
+      publisherId: user.id,
     })
 
     return appUser
@@ -76,7 +77,7 @@ const uninstall = async req => {
     }
     appUser.status = CONSTS.APP_USER.STATUS.UNINSTALLED
     appUser.uninstalledAt = new Date()
-    appUser.installedAt = null
+    // appUser.installedAt = null
     await appUser.save()
   } catch (error) {
     throw utils.buildErrObject(error.code || 500, error.message)
@@ -93,8 +94,10 @@ const uninstall = async req => {
  * @param {Object} res - response object
  */
 exports.install = async (req, res) => {
+  const {device, operatingSystem} = req.body
   try {
     req = matchedData(req)
+    req = {...req, device, operatingSystem}
     const appUser = await installApp(req)
     // increment user installs
     try {
@@ -169,15 +172,23 @@ exports.getAppStats = async (req, res) => {
  */
 exports.getAppUsers = async (req, res) => {
   const { id } = req.params
+  const { role } = req.user
   const query = await db.checkQueryString(req.query)
   if (query.search) {
     const search = query.search
     delete query.search
-    query['$or'] = [
-      { device: { $regex: `.*${search}.*`, $options: 'i' } },
-      { userKey: { $regex: `.*${search}.*`, $options: 'i' } },
-      { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
-    ]
+    if (role == 'admin') {
+      query['$or'] = [
+        { device: { $regex: `.*${search}.*`, $options: 'i' } },
+        { userKey: { $regex: `.*${search}.*`, $options: 'i' } },
+        { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
+      ]
+    } else {
+      query['$or'] = [
+        { device: { $regex: `.*${search}.*`, $options: 'i' } },
+        { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
+      ]
+    }
   }
   query.publisherId = id
   let sort = null
@@ -191,7 +202,6 @@ exports.getAppUsers = async (req, res) => {
     opt.collation = { locale: 'en' }
     return { ...opt, sort }
   }
-
   const data = await db.getItems(req, AppUser, query, processQuery)
   res.status(200).json(data)
 }

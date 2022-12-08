@@ -17,17 +17,24 @@ const moment = require('moment')
 exports.startRunning = async (req, res) => {
   try {
     req = matchedData(req)
-    // await AppUserSession.updateMany(
-    //   { userKey: req.userKey, endAt: null },
-    //   { endAt: new Date() }
-    // )
+    let sessions = await AppUserSession.find({ userKey: req.userKey })
+    sessions.forEach(async it => {
+      if (it.endAt == null) {
+        it.endAt = new Date()
+        onSessionEnded(it)
+      }
+    })
+
     const appUser = await AppUser.findOne({ userKey: req.userKey })
+    if (appUser.status == 'uninstalled') {
+      throw utils.buildErrObject(400, 'DEVICE_ALREADY_UNINSTALLED')
+    }
     req = {
       ...req,
       userId: appUser._id,
       publisherId: appUser.publisherId
     }
-    session = await AppUserSession.create(req)
+    let session = await AppUserSession.create(req)
     // increment live numbers to user
     try {
       await User.findByIdAndUpdate(
@@ -94,7 +101,6 @@ exports.runningNow = async (req, res) => {
     } catch (error) {
       utils.handleError(res, error)
     }
-    
   } else {
     //find all sessions lastSeen is older than 10 mins
     //and update duration
@@ -108,7 +114,6 @@ exports.runningNow = async (req, res) => {
     //   onSessionEnded(session)
     // })
     throw utils.buildErrObject(400, 'INVALID_REQUEST')
-
   }
 }
 
@@ -125,10 +130,20 @@ const onSessionEnded = async session => {
   } else {
     try {
       await AppUser.findByIdAndUpdate(userId, {
-        $inc: { totalDuration: session.duration } //
+        $inc: { liveTime: session.duration }
       })
       await User.findByIdAndUpdate(publisherId, {
-        $inc: { totalDuration: session.duration, live: -1 } //
+        $inc: { liveTime: session.duration, live: -1 } //
+      })
+      // const totalLiveTime = (await AppUser.aggregate([{$group: {_id:null, total:{$sum:"$liveTime"}}}]))[0]['total']
+      const totalLiveTime = (await User.findById(publisherId)).liveTime
+      let appUsers = await AppUser.find({ liveTime: { $gt: 0 } })
+      appUsers.forEach(async appUser => {
+        appUser.timeRatio =
+          totalLiveTime == 0
+            ? 0
+            : ((appUser.liveTime * 100) / totalLiveTime).toFixed(2)
+        await appUser.save()
       })
     } catch (error) {
       throw utils.buildErrObject(422, error.message)
