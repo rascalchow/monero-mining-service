@@ -62,11 +62,6 @@ exports.endRunning = async (req, res) => {
         }
         session.endAt = new Date()
         // set duration to terminated session
-        const start = moment(session.startAt)
-        const end = moment(session.endAt)
-        const duration = end.diff(start, 'seconds')
-        session.duration = duration //
-        await session.save()
         onSessionEnded(session)
       }
     } else {
@@ -89,35 +84,42 @@ exports.runningNow = async (req, res) => {
   const sessionId = req.body['sessionId']
   if (sessionId) {
     //update lastSeen
-    await AppUserSession.findByIdAndUpdate(
-      { sessionId },
-      {
-        lastSeen: new Date()
-      }
-    )
+    try {
+      await AppUserSession.findByIdAndUpdate(
+        { sessionId },
+        {
+          lastSeen: new Date()
+        }
+      )
+    } catch (error) {
+      utils.handleError(res, error)
+    }
+    
   } else {
     //find all sessions lastSeen is older than 10 mins
     //and update duration
-    const lastTime = moment()
-      .subtract(10, 'minutes')
-      .toISOString()
-    const terminatedSessions = await AppUserSession.find({
-      lastSeen: { $lt: lastTime }
-    })
-    terminatedSessions.forEach(async session => {
-      const start = moment(session.startAt)
-      const end = moment(session.endAt)
-      const duration = end.diff(start, 'seconds')
-      session.duration = duration
-      await session.save()
-      onSessionEnded(session)
-    })
+    // const lastTime = moment()
+    //   .subtract(10, 'minutes')
+    //   .toISOString()
+    // const terminatedSessions = await AppUserSession.find({
+    //   lastSeen: { $lt: lastTime }
+    // })
+    // terminatedSessions.forEach(async session => {
+    //   onSessionEnded(session)
+    // })
+    throw utils.buildErrObject(400, 'INVALID_REQUEST')
+
   }
 }
 
 const onSessionEnded = async session => {
-  // let session = await findById(sessionId)
-  const { userId, publisherId, duration } = session
+  const start = moment(session.startAt)
+  const end = moment(session.endAt)
+  const duration = end.diff(start, 'seconds')
+  session.duration = duration
+  await session.save()
+
+  const { userId, publisherId } = session
   if (!userId || !publisherId) {
     throw utils.buildErrObject(400, 'INVALID_SESSION')
   } else {

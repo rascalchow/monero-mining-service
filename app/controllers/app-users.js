@@ -93,7 +93,6 @@ const uninstall = async req => {
  * @param {Object} res - response object
  */
 exports.install = async (req, res) => {
-  console.log('install')
   try {
     req = matchedData(req)
     const appUser = await installApp(req)
