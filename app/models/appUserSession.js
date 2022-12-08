@@ -14,9 +14,13 @@ const AppUserSessionSchema = new mongoose.Schema(
     endAt: {
       type: Date
     },
-    duration:{
+    duration: {
       type: Number,
-      default:0
+      default: 0
+    },
+    lastSeen: {
+      type: Date,
+      default: Date.now
     },
     userId: {
       type: mongoose.Schema.ObjectId,

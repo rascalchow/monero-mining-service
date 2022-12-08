@@ -93,10 +93,20 @@ const uninstall = async req => {
  * @param {Object} res - response object
  */
 exports.install = async (req, res) => {
+  console.log('install')
   try {
     req = matchedData(req)
     const appUser = await installApp(req)
-
+    // increment user installs
+    try {
+      await User.findOneAndUpdate(
+        { publisherKey: req.publisherKey },
+        { $inc: { installs: 1 } },
+        { upsert: true }
+      )
+    } catch (error) {
+      utils.handleError(res, error)
+    }
     utils.handleSuccess(res, 201, appUser)
   } catch (error) {
     utils.handleErrorV2(res, error)
@@ -112,6 +122,17 @@ exports.uninstall = async (req, res) => {
   try {
     req = matchedData(req)
     await uninstall(req)
+    // increment user uninstalls
+    try {
+      await User.findOneAndUpdate(
+        { publisherKey: req.publisherKey },
+        { $inc: { uninstalls: 1 } },
+        { upsert: true }
+      )
+    } catch (error) {
+      utils.handleError(res, error)
+    }
+
     utils.handleSuccess(res, 203)
   } catch (error) {
     utils.handleErrorV2(res, error)
