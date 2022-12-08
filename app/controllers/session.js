@@ -69,7 +69,6 @@ exports.getLiveTime = async (req, res) => {
   let yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   let lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
   let allTime = new Date(now.getFullYear(), now.getMonth() - 3)
-
   const query = {
     $exists: true,
     $gte: new Date(param[0]),
@@ -163,10 +162,10 @@ exports.getLiveTime = async (req, res) => {
       }
       return res.status(200).json(data)
     } else {
-      throw buildErrObject(400, err.message)
+      throw utils.buildErrObject(400, 'BAD_REQUEST_OF_TYPE')
     }
   } catch (error) {
-    throw buildErrObject(422, err.message)
+    throw utils.buildErrObject(422, error.message)
   }
 }
 
