@@ -25,7 +25,10 @@ module.exports = {
       'liveTime',
       'timeRatio',
       'currencyEarned',
-      'currencySpent'
+      'currencySpent',
+      'installedAt',
+      'uninstalledAt',
+      'status'
     ]
   },
   PUBLISHER: {

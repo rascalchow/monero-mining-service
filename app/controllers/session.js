@@ -94,7 +94,6 @@ exports.runningNow = async (req, res) => {
     } catch (error) {
       utils.handleError(res, error)
     }
-    
   } else {
     //find all sessions lastSeen is older than 10 mins
     //and update duration
@@ -108,7 +107,6 @@ exports.runningNow = async (req, res) => {
     //   onSessionEnded(session)
     // })
     throw utils.buildErrObject(400, 'INVALID_REQUEST')
-
   }
 }
 
