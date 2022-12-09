@@ -17,10 +17,14 @@ const moment = require('moment')
 exports.startRunning = async (req, res) => {
   try {
     req = matchedData(req)
-    await AppUserSession.updateMany(
-      { userKey: req.userKey, endAt: null },
-      { endAt: new Date() }
-    )
+    let sessions = await AppUserSession.find({ userKey: req.userKey })
+    sessions.forEach(async it => {
+      if (it.endAt == null) {
+        it.endAt = new Date()
+        onSessionEnded(it)
+      }
+    })
+
     const appUser = await AppUser.findOne({ userKey: req.userKey })
     if (appUser.status == 'uninstalled') {
       throw utils.buildErrObject(400, 'DEVICE_ALREADY_UNINSTALLED')
@@ -30,7 +34,7 @@ exports.startRunning = async (req, res) => {
       userId: appUser._id,
       publisherId: appUser.publisherId
     }
-    session = await AppUserSession.create(req)
+    let session = await AppUserSession.create(req)
     // increment live numbers to user
     try {
       await User.findByIdAndUpdate(
@@ -125,18 +129,20 @@ const onSessionEnded = async session => {
     throw utils.buildErrObject(400, 'INVALID_SESSION')
   } else {
     try {
-      const totalLiveTime = (await User.findById(publisherId)).liveTime
       // const totalLiveTime = (await AppUser.aggregate([{$group: {_id:null, total:{$sum:"$liveTime"}}}]))[0]['total']
-      console.log(totalLiveTime)
       await AppUser.findByIdAndUpdate(userId, {
         $inc: { liveTime: session.duration }
       })
       await User.findByIdAndUpdate(publisherId, {
         $inc: { liveTime: session.duration, live: -1 } //
       })
+      const totalLiveTime = (await User.findById(publisherId)).liveTime
       let appUsers = await AppUser.find({ liveTime: { $gt: 0 } })
       appUsers.forEach(async appUser => {
-        appUser.timeRatio = Math.round((appUser.liveTime * 100) / totalLiveTime)
+        appUser.timeRatio =
+          totalLiveTime == 0
+            ? 0
+            : Math.round((appUser.liveTime * 100) / totalLiveTime)
         await appUser.save()
       })
     } catch (error) {
