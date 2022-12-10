@@ -34,7 +34,6 @@ const generateUserrKey = async () => {
  * @param {Object} req - request object
  */
 const installApp = async req => {
-  console.log(req)
   try {
     const user = await User.findOne({ publisherKey: req.publisherKey })
     if (!user) {
@@ -52,7 +51,7 @@ const installApp = async req => {
       ...req,
       userKey: await generateUserrKey(),
       publisherKey: user.publisherKey,
-      publisherId: user.id,
+      publisherId: user.id
     })
 
     return appUser
@@ -94,10 +93,10 @@ const uninstall = async req => {
  * @param {Object} res - response object
  */
 exports.install = async (req, res) => {
-  const {device, operatingSystem} = req.body
+  const { device, operatingSystem } = req.body
   try {
     req = matchedData(req)
-    req = {...req, device, operatingSystem}
+    req = { ...req, device, operatingSystem }
     const appUser = await installApp(req)
     // increment user installs
     try {
@@ -220,6 +219,7 @@ exports.getInstalledUsers = async (req, res) => {
       status: type,
       installedAt: query
     })
+    // console.log(filterAppUserInfo(result,param))
     return res.status(200).json({
       info: result,
       count: filterAppUserInfo(result, param)
@@ -243,9 +243,9 @@ const filterAppUserInfo = (installs, dates) => {
       )
       const { installedAt } = it
       if (
-        installedAt.getFullYear() == current.getFullYear() &&
-        installedAt.getMonth() == current.getMonth() &&
-        installedAt.getDate() == current.getDate()
+        installedAt.getFullYear() == current.getUTCFullYear() &&
+        installedAt.getMonth() == current.getUTCMonth() &&
+        installedAt.getDate() == current.getUTCDate()
       ) {
         return true
       }

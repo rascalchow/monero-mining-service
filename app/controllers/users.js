@@ -101,7 +101,37 @@ exports.getItem = async (req, res) => {
   try {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
-    res.status(200).json(await db.getItem(id, model, 'userProfileId'))
+    // const totalLiveTime = (await AppUser.aggregate([{$group: {_id:null, total:{$sum:"$liveTime"}}}]))[0]['total']
+    const totalCount = await model.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalLiveTime: { $sum: '$liveTime' },
+          totalLive: { $sum: '$live' },
+          totalInstalls: { $sum: '$installs' },
+          totalUninstalls: { $sum: '$uninstalls' }
+        }
+      }
+    ])
+    const {
+      totalLiveTime,
+      totalLive,
+      totalInstalls,
+      totalUninstalls
+    } = totalCount[0]
+    const user = await db.getItem(id, model)
+    const liveTimeRate = totalLiveTime == 0 ? 0 : user.liveTime / totalLiveTime
+    const liveRate = totalLive == 0 ? 0 : user.live / totalLive
+    const installsRate = totalInstalls == 0 ? 0 : user.installs / totalInstalls
+    const uninstallsRate =
+      totalUninstalls == 0 ? 0 : user.uninstalls / totalUninstalls
+    res.status(200).json({
+      ...user,
+      liveTimeRate,
+      liveRate,
+      installsRate,
+      uninstallsRate
+    })
   } catch (error) {
     utils.handleError(res, error)
   }
