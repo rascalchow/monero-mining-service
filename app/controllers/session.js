@@ -137,8 +137,10 @@ const onSessionEnded = async session => {
       })
       // const totalLiveTime = (await AppUser.aggregate([{$group: {_id:null, total:{$sum:"$liveTime"}}}]))[0]['total']
       const totalLiveTime = (await User.findById(publisherId)).liveTime
+      console.log(totalLiveTime)
       let appUsers = await AppUser.find({ liveTime: { $gt: 0 } })
       appUsers.forEach(async appUser => {
+        console.log(appUser.liveTime)
         appUser.timeRatio =
           totalLiveTime == 0
             ? 0
