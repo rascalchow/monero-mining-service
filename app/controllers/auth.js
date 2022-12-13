@@ -270,28 +270,20 @@ const registerUser = async req => {
   try {
     const publisherKey = await generatePubliserKey()
 
-    const userProfile = new UserProfile({
-      ...req.userProfile,
-      installer: utils.crupdateMsi(
-        publisherKey,
-        req.userProfile.companyName,
-        req.userProfile.application
-      )
-    })
-    await userProfile.save()
     const user = await User.create({
-      name: req.name,
-      email: req.email,
-      phone: req.phone,
-      password: req.password,
+      ...req,
       staffId: req.staffId,
       verification: uuid.v4(),
-      userProfileId: userProfile.id,
-      publisherKey
+      publisherKey,
+      installer: utils.crupdateMsi(
+        publisherKey,
+        req.companyName,
+        req.application
+      )
     })
     const eulaTemplate = (await AppConfig.findOne({ type: 'EULA' })).data.eula
-      .replace(/{{companyName}}/g, req.userProfile.companyName)
-      .replace(/{{productName}}/g, req.userProfile.application)
+      .replace(/{{companyName}}/g, req.companyName)
+      .replace(/{{productName}}/g, req.application)
 
     await UserEula.create({
       publisherId: user._id,
@@ -690,7 +682,11 @@ exports.seedAdminUser = async () => {
       verification: uuid.v4(),
       role: CONSTS.USER.ROLE.ADMIN,
       status: CONSTS.USER.STATUS.ACTIVE,
-      publisherKey: '00000000'
+      publisherKey: '00000000',
+      companyName: 'Nurev',
+      application: 'Nurev',
+      contact: 'Nurev',
+      website: 'Nurev'
     }
     const user = await User.findOne({
       email: USER.email

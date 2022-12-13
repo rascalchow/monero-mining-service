@@ -45,12 +45,7 @@ const cleanPaginationID = result => {
   result.docs.map(element => delete element.id)
   return result
 }
-
-/**
- * Builds initial options for query
- * @param {Object} query - query object
- */
-const listInitOptions = async req => {
+const listInitOptions = req => {
   return new Promise(resolve => {
     const order = req.query.order || -1
     const sort = req.query.sort || 'createdAt'
@@ -58,13 +53,19 @@ const listInitOptions = async req => {
     const page = parseInt(req.query.page, 10) || 1
     const limit = parseInt(req.query.limit, 10) || 5
     const populate = buildPopulate(req.query.populate)
-
+    let search = ''
+    try {
+      search = JSON.parse(req.query.filter)['search']
+    } catch (err) {
+      console.log(err)
+    }
     const options = {
       select: req.query.fields,
       sort: sortBy,
       lean: true,
       page,
-      limit
+      limit,
+      search
     }
 
     if (populate) {
@@ -73,6 +74,10 @@ const listInitOptions = async req => {
     resolve(options)
   })
 }
+/**
+ * Builds initial options for query
+ * @param {Object} query - query object
+ */
 
 module.exports = {
   /**
@@ -85,10 +90,9 @@ module.exports = {
     return new Promise((resolve, reject) => {
       try {
         if (typeof query.filter !== 'undefined') {
-          if (query.filter === '') {
+          if (query.filter === '' || query.filter === '{}') {
             return resolve({})
           }
-
           const filter = JSON.parse(query.filter)
           resolve(filter)
         } else {
@@ -111,7 +115,7 @@ module.exports = {
     const processedOpt = processQuery ? processQuery(options) : options
     return new Promise((resolve, reject) => {
       model.paginate(query, processedOpt, (err, items) => {
-        if (err) {
+        if (err || !items) {
           reject(buildErrObject(422, err.message))
         }
         resolve(cleanPaginationID(items))

@@ -17,7 +17,47 @@ module.exports = {
     STATUS: {
       INSTALLED: 'installed',
       UNINSTALLED: 'uninstalled'
-    }
+    },
+    SORT_KEY: [
+      'userKey',
+      'device',
+      'operatingSystem',
+      'liveTime',
+      'timeRatio',
+      'currencyEarned',
+      'currencySpent',
+      'installedAt',
+      'uninstalledAt',
+      'status'
+    ]
+  },
+  PUBLISHER: {
+    SORT_KEY: [
+      'name',
+      'email',
+      'companyName',
+      'status',
+      'installs',
+      'live',
+      'liveTime',
+      'earnings',
+      'referrals',
+      'payments'
+    ]
+  },
+  INVITE: {
+    STATUSES:['invited','signup'],
+    STATUS:{
+      INVITED:'invited',
+      SIGNUP:'signup'
+    },
+    SORT_KEY:[
+      'refereeEmail',
+      'code',
+      'status',
+      'acceptedAt',
+      'createdAt'
+    ]
   },
   PHONE_REGEX: /^[+]?[(]?[0-9]{3}[)]?[-s.]?[0-9]{3}[-s.]?[0-9]{4,6}$/,
   DEFAULT_EULA_TEMPLATE: 'This is {{companyName}}. This is {{productName}}.',

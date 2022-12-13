@@ -67,41 +67,84 @@ exports.updateItem = [
     .withMessage('IS_EMPTY')
     .isEmail()
     .withMessage('EMAIL_IS_NOT_VALID'),
-  check('password')
-    .optional()
-    .not()
-    .isEmpty()
-    .withMessage('IS_EMPTY')
-    .isLength({
-      min: 5
-    })
-    .withMessage('PASSWORD_TOO_SHORT_MIN_5'),
-  check('role')
-    .optional()
-    .not()
-    .isEmpty()
-    .withMessage('IS_EMPTY')
-    .isIn(['user', 'admin'])
-    .withMessage('USER_NOT_IN_KNOWN_ROLE'),
+  // check('password')
+  //   .optional()
+  //   .not()
+  //   .isEmpty()
+  //   .withMessage('IS_EMPTY')
+  //   .isLength({
+  //     min: 5
+  //   })
+  //   .withMessage('PASSWORD_TOO_SHORT_MIN_5'),
+  // check('role')
+  //   .optional()
+  //   .not()
+  //   .isEmpty()
+  //   .withMessage('IS_EMPTY')
+  //   .isIn(['user', 'admin'])
+  //   .withMessage('USER_NOT_IN_KNOWN_ROLE'),
   check('phone')
     .optional()
     .not()
     .isEmpty()
     .withMessage('IS_EMPTY')
     .trim(),
-  check('status')
+  // check('status')
+  //   .optional()
+  //   .not()
+  //   .isEmpty()
+  //   .withMessage('IS_EMPTY')
+  //   .trim(),
+
+  // check('id')
+  //   .exists()
+  //   .withMessage('MISSING')
+  //   .not()
+  //   .isEmpty()
+  //   .withMessage('IS_EMPTY'),
+  check('companyName')
     .optional()
     .not()
     .isEmpty()
     .withMessage('IS_EMPTY')
     .trim(),
 
-  check('id')
-    .exists()
-    .withMessage('MISSING')
+  check('application')
+    .optional()
     .not()
     .isEmpty()
-    .withMessage('IS_EMPTY'),
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('contact')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('country')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('website')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('moreInformation')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
+  check('instantMessenger')
+    .optional()
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .trim(),
   (req, res, next) => {
     validationResult(req, res, next)
   }

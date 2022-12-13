@@ -4,6 +4,13 @@ const validate = require('../controllers/session.validate')
 const controller = require('../controllers/session')
 const trimRequest = require('trim-request')
 const { requireToken } = require('../middleware/device')
+const AuthController = require('../controllers/auth')
+const CONSTS = require('../consts')
+const passport = require('passport')
+
+const requireAuth = passport.authenticate('jwt', {
+  session: false
+})
 
 router.post(
   '/start-running',
@@ -18,6 +25,21 @@ router.post(
   requireToken,
   trimRequest.all,
   controller.endRunning
+)
+
+router.get(
+  '/livetime/:id',
+  requireAuth,
+  trimRequest.all,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  controller.getLiveTime
+)
+
+router.post(
+  '/running-now',
+  requireToken,
+  trimRequest.all,
+  controller.runningNow
 )
 
 module.exports = router

@@ -1,9 +1,13 @@
 const model = require('../models/user')
+const appUserModel = require('../models/appUser')
+const profileModel = require('../models/userProfile')
 const uuid = require('uuid')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
 const db = require('../middleware/db')
 const emailer = require('../middleware/emailer')
+const { listInitOptions } = require('../middleware/db')
+const CONSTS = require('../consts')
 
 /*********************
  * Private functions *
@@ -54,11 +58,35 @@ const createItem = async req => {
 exports.getItems = async (req, res) => {
   try {
     const query = await db.checkQueryString(req.query)
-    const processQuery = opt => {
-      opt.populate = ['userProfileId']
-      return opt
+    if (query.search) {
+      const search = query.search
+      delete query.search
+      query['$or'] = [
+        { name: { $regex: `.*${search}.*`, $options: 'i' } },
+        { email: { $regex: `.*${search}.*`, $options: 'i' } },
+        { companyName: { $regex: `.*${search}.*`, $options: 'i' } }
+      ]
     }
-    res.status(200).json(await db.getItems(req, model, query, processQuery))
+
+    let sort = {}
+    CONSTS.PUBLISHER.SORT_KEY.forEach(key => {
+      if (query[key] && key !== 'status') {
+        sort = { [key]: query[key] }
+        delete query[key]
+      }
+    })
+
+    const processQuery = opt => {
+      opt.collation = { locale: 'en' }
+      if (query['stat']) {
+        sort['status'] = query['stat']
+        delete query.stat
+      }
+      return { ...opt, sort }
+    }
+
+    const data = await db.getItems(req, model, query, processQuery)
+    res.status(200).json(data)
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -73,7 +101,37 @@ exports.getItem = async (req, res) => {
   try {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
-    res.status(200).json(await db.getItem(id, model, 'userProfileId'))
+    // const totalLiveTime = (await AppUser.aggregate([{$group: {_id:null, total:{$sum:"$liveTime"}}}]))[0]['total']
+    const totalCount = await model.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalLiveTime: { $sum: '$liveTime' },
+          totalLive: { $sum: '$live' },
+          totalInstalls: { $sum: '$installs' },
+          totalUninstalls: { $sum: '$uninstalls' }
+        }
+      }
+    ])
+    const {
+      totalLiveTime,
+      totalLive,
+      totalInstalls,
+      totalUninstalls
+    } = totalCount[0]
+    const user = await db.getItem(id, model)
+    const liveTimeRate = totalLiveTime == 0 ? 0 : user.liveTime / totalLiveTime
+    const liveRate = totalLive == 0 ? 0 : user.live / totalLive
+    const installsRate = totalInstalls == 0 ? 0 : user.installs / totalInstalls
+    const uninstallsRate =
+      totalUninstalls == 0 ? 0 : user.uninstalls / totalUninstalls
+    res.status(200).json({
+      ...user,
+      liveTimeRate,
+      liveRate,
+      installsRate,
+      uninstallsRate
+    })
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -86,30 +144,19 @@ exports.getItem = async (req, res) => {
  */
 exports.updateItem = async (req, res) => {
   try {
-    req = matchedData(req)
-    console.log(req)
-    const id = await utils.isIDGood(req.id)
-
+    const { id } = req.params
+    const { email } = req.body
     let user = null
-
-    const doesEmailExists = await emailer.emailExistsExcludingMyself(
-      id,
-      req.email
-    )
+    const doesEmailExists = await emailer.emailExistsExcludingMyself(id, email)
     if (!doesEmailExists) {
-      user = await db.updateItem(id, model, req)
+      user = await db.updateItem(id, model, req.body)
     }
 
     if (!user) {
-      utils.buildErrObject(422, 'NOT_FOUND')
-    }
-
-    if (req.password) {
-      user.password = req.password
+      utils.buildErrObject(422, 'USER_NOT_FOUND')
     }
     await user.save()
-
-    res.status(200).json(user)
+    res.status(200).json(await db.getItem(id, model, null))
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -174,3 +221,41 @@ exports.rejectUser = async (req, res) => {
     utils.handleError(res, error)
   }
 }
+
+// const processInstalls = (installs, item) => {
+//   const duration = item.type == 'day' ? item.value : item.value * 30
+//   const now = new Date()
+//   let result = []
+//   for (let i = 0; i < duration; i++) {
+//     let current = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+//     let count = installs.filter(it => {
+//       const { installedAt } = it
+//       if (
+//         installedAt.getFullYear() == current.getFullYear() &&
+//         installedAt.getMonth() == current.getMonth() &&
+//         installedAt.getDate() == current.getDate()
+//       ) {
+//         return true
+//       }
+//       return false
+//     }).length
+//     result[i] = count
+//   }
+//   return result
+// }
+
+// const handleDuration = date => {
+//   let now = new Date()
+//   if (date) {
+//     if (date.type == 'day')
+//       return new Date(
+//         now.getFullYear(),
+//         now.getMonth(),
+//         now.getDate() - date.value
+//       )
+//     else if (date.type == 'month')
+//       return new Date(now.getFullYear(), now.getMonth() - date.value)
+//     else return now
+//   }
+//   return now
+// }

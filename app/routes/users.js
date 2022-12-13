@@ -27,6 +27,16 @@ router.get(
   controller.getItems
 )
 
+
+router.get(
+  '/',
+  requireAuth,
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  trimRequest.all,
+  controller.getItems
+)
+
 /*
  * Create new item route
  */
