@@ -3,6 +3,7 @@ const path = require('path')
 const User = require('../models/user')
 const UserAccess = require('../models/userAccess')
 const UserProfile = require('../models/userProfile')
+const Invite = require('../models/invite')
 const UserEula = require('../models/userEula')
 const AppConfig = require('../models/appConfig')
 const ForgotPassword = require('../models/forgotPassword')
@@ -266,10 +267,29 @@ const passwordsDoNotMatch = async user => {
  * Registers a new user in database
  * @param {Object} req - request object
  */
-const registerUser = async req => {
+const registerUser = async (req, res) => {
   try {
+    const referralCode = req['referral']
+    if (!referralCode) {
+      throw utils.buildErrObject(400, 'REFERRAL_CODE_NOT_EXIST')
+    }
+    delete req['referral']
+    // check if there is referral code in invite collection and not expired
+    const invite = await Invite.findOne({ code: referralCode })
+    if (!invite) {
+      throw utils.buildErrObject(400, 'WRONG_REFERRAL_CODE')
+    }
+    if (invite.expired) {
+      throw utils.buildErrObject(400, 'REFERRAL_ALREADY_EXPIRED')
+    }
+    if (invite.status == CONSTS.INVITE.STATUS.SIGNUP) {
+      throw utils.buildErrObject(400, 'USER_ALREADY_SIGNED_UP')
+    }
+    if (invite.refereeEmail !== req.email) {
+      throw utils.buildErrObject(400, 'WRONG_EMAIL')
+    }
+    //register
     const publisherKey = await generatePubliserKey()
-
     const user = await User.create({
       ...req,
       staffId: req.staffId,
@@ -289,6 +309,15 @@ const registerUser = async req => {
       publisherId: user._id,
       eula: eulaTemplate
     })
+    // update invite collection
+    await Invite.updateMany(
+      { code: referralCode },
+      {
+        status: CONSTS.INVITE.STATUS.SIGNUP,
+        expired: true,
+        acceptedAt: new Date()
+      }
+    )
 
     return user
   } catch (err) {
