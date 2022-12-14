@@ -4,11 +4,15 @@ const utils = require('../middleware/utils')
 const { matchedData } = require('express-validator')
 const uuid = require('uuid')
 const model = require('../models/invite')
+const User = require('../models/user')
 const { INVITE } = require('../consts')
 const db = require('../middleware/db')
+const mongoose = require('mongoose')
+
+const REFERRAL_CODE_LENGTH = 12
 
 /**
- * Get profile function called by route
+ * Get invites function called by route
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
@@ -36,4 +40,76 @@ exports.get = async (req, res) => {
   }
   const data = await db.getItems(req, model, query, processQuery)
   res.status(200).json(data)
+}
+
+/**
+ * Post invite function called by route
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.create = async (req, res) => {
+  const email = req.body
+  try {
+    // check if the email is already signed up
+    const user = await User.findOne(email)
+    if (user) {
+      throw utils.buildErrObject(422, 'USER_ALREADY_REGISTERED')
+    }
+    //generate referral code and create invite after checking if you already invited
+    const invite = await model.findOne({
+      refereeEmail: email.email,
+      referrerId: mongoose.Types.ObjectId(req.user._id)
+    })
+    if (invite) {
+      throw utils.buildErrObject(422, 'YOU_ALREADY_INVITED')
+    }
+    const newReq = {
+      referrerId: req.user._id,
+      refereeEmail: email.email,
+      code: await generateCode()
+    }
+    const newInvite = await createItem(newReq)
+    res.status(200).json(newInvite)
+  } catch (error) {
+    utils.handleError(res, error)
+  }
+}
+
+/**
+ * Generates a random unique referral code
+ */
+const generateCode = async () => {
+  const alphaNumerics =
+    '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let key = ''
+  for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+    key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
+  }
+  while ((await model.find({ code: key }).length) > 0) {
+    let key = ''
+    for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+      key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
+    }
+  }
+  return key
+}
+
+/**
+ * Creates a new item in database
+ * @param {Object} req - request object
+ */
+const createItem = async req => {
+  return new Promise((resolve, reject) => {
+    const invite = new model({
+      referrerId: req.referrerId,
+      refereeEmail: req.refereeEmail,
+      code: req.code
+    })
+    invite.save((err, item) => {
+      if (err) {
+        reject(utils.buildErrObject(422, err.message))
+      }
+      resolve(item)
+    })
+  })
 }

@@ -14,7 +14,8 @@ const InviteSchema = new mongoose.Schema(
       required: true
     },
     expired: {
-      type: Boolean
+      type: Boolean,
+      default:false
     },
     code: {
       type: String
@@ -22,7 +23,7 @@ const InviteSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: CONSTS.INVITE.STATUSES,
-      default: CONSTS.APP_USER.STATUS.INVITED
+      default: CONSTS.INVITE.STATUS.INVITED
     },
     acceptedAt: {
       type: Date

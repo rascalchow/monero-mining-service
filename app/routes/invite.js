@@ -11,23 +11,26 @@ const requireAuth = passport.authenticate('jwt', {
 const trimRequest = require('trim-request')
 const CONSTS = require('../consts')
 
-/*
- * Profile routes
- */
 
 /*
- * Get profile route
+ * Get invite route
  */
 router.get(
   '/',
   requireAuth,
-  AuthController.roleAuthorization(CONSTS.USER.ROLES),
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   controller.get
 )
 
 /*
- * Update profile route
+ * Post invite route
  */
-
+router.post(
+  '/',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  trimRequest.all,
+  controller.create
+)
 module.exports = router
