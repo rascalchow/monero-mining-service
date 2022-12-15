@@ -20,8 +20,7 @@ exports.startRunning = async (req, res) => {
     let sessions = await AppUserSession.find({ userKey: req.userKey })
     sessions.forEach(async it => {
       if (it.endAt == null) {
-        it.endAt = new Date()
-        onSessionEnded(it)
+        utils.onSessionEnded(it)
       }
     })
 
@@ -67,9 +66,8 @@ exports.endRunning = async (req, res) => {
         if (session.endAt) {
           throw utils.buildErrObject(400, 'SESSION_IS_ALREADY_ENDED')
         }
-        session.endAt = new Date()
         // set duration to terminated session
-        onSessionEnded(session)
+        utils.onSessionEnded(session)
       }
     } else {
       await AppUserSession.updateMany(
@@ -92,62 +90,18 @@ exports.runningNow = async (req, res) => {
   if (sessionId) {
     //update lastSeen
     try {
-      await AppUserSession.findByIdAndUpdate(
-        { sessionId },
-        {
-          lastSeen: new Date()
-        }
-      )
+      const session = await AppUserSession.findById(sessionId)
+      if (session.endAt) {
+        throw utils.buildErrObject(422, 'SESSION_ENDED')
+      }
+      session.lastSeen = new Date()
+      session.save()
+      res.status(201).json(session)
     } catch (error) {
       utils.handleError(res, error)
     }
   } else {
-    //find all sessions lastSeen is older than 10 mins
-    //and update duration
-    // const lastTime = moment()
-    //   .subtract(10, 'minutes')
-    //   .toISOString()
-    // const terminatedSessions = await AppUserSession.find({
-    //   lastSeen: { $lt: lastTime }
-    // })
-    // terminatedSessions.forEach(async session => {
-    //   onSessionEnded(session)
-    // })
     throw utils.buildErrObject(400, 'INVALID_REQUEST')
-  }
-}
-
-const onSessionEnded = async session => {
-  const start = moment(session.startAt)
-  const end = moment(session.endAt)
-  const duration = end.diff(start, 'seconds')
-  session.duration = duration
-  await session.save()
-
-  const { userId, publisherId } = session
-  if (!userId || !publisherId) {
-    throw utils.buildErrObject(400, 'INVALID_SESSION')
-  } else {
-    try {
-      await AppUser.findByIdAndUpdate(userId, {
-        $inc: { liveTime: session.duration }
-      })
-      await User.findByIdAndUpdate(publisherId, {
-        $inc: { liveTime: session.duration, live: -1 } //
-      })
-      // const totalLiveTime = (await AppUser.aggregate([{$group: {_id:null, total:{$sum:"$liveTime"}}}]))[0]['total']
-      const totalLiveTime = (await User.findById(publisherId)).liveTime
-      let appUsers = await AppUser.find({ liveTime: { $gt: 0 } })
-      appUsers.forEach(async appUser => {
-        appUser.timeRatio =
-          totalLiveTime == 0
-            ? 0
-            : ((appUser.liveTime * 100) / totalLiveTime).toFixed(2)
-        await appUser.save()
-      })
-    } catch (error) {
-      throw utils.buildErrObject(422, error.message)
-    }
   }
 }
 
