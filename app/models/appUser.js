@@ -29,15 +29,19 @@ const AppUserSchema = new mongoose.Schema(
     },
     timeRatio: {
       type: Number,
-      default: 0
+      default: 0,
+      max: 100,
+      min: 0
     },
     currencyEarned: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     currencySpent: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     publisherKey: {
       type: String,
@@ -45,13 +49,14 @@ const AppUserSchema = new mongoose.Schema(
     },
     totalDuration: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
-    device:{
-      type: String,
+    device: {
+      type: String
     },
-    operatingSystem:{
-      type:String
+    operatingSystem: {
+      type: String
     },
     publisherId: {
       type: mongoose.Schema.ObjectId,

@@ -37,8 +37,8 @@ router.get(
 
 router.post(
   '/running-now',
-  requireToken,
-  trimRequest.all,
+  // requireToken,
+  // trimRequest.all,
   controller.runningNow
 )
 

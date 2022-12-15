@@ -4,7 +4,11 @@ const { execSync } = require('child_process')
 const { FILE_UPLOAD_DIR } = require('../consts')
 const requestIp = require('request-ip')
 const { validationResult } = require('express-validator')
-
+const { session } = require('passport')
+const utils = require('../middleware/utils')
+const moment = require('moment')
+const AppUser = require('../models/appUser')
+const User = require('../models/user')
 /**
  * Removes extension from file
  * @param {string} file - filename
@@ -199,4 +203,39 @@ exports.crupdateMsi = (publisherKey, companyName, productName) => {
     `${cmd} ${src} ${dest} ${publisherKey} ${companyName} ${productName}`
   )
   return path.join(publisherKey, 'install.msi')
+}
+
+exports.onSessionEnded = async sess => {
+  const start = moment(sess.startAt)
+  sess.endAt = new Date()
+  const end = moment(sess.endAt)
+  const duration = end.diff(start, 'seconds')
+  sess.duration = duration
+  sess.lastSeen = new Date()
+  await sess.save()
+
+  const { userId, publisherId } = sess
+  if (!userId || !publisherId) {
+    throw utils.buildErrObject(400, 'INVALID_SESSION')
+  } else {
+    try {
+      await AppUser.findByIdAndUpdate(userId, {
+        $inc: { liveTime: sess.duration }
+      })
+      await User.findByIdAndUpdate(publisherId, {
+        $inc: { liveTime: sess.duration, live: -1 } //
+      })
+      const totalLiveTime = (await User.findById(publisherId)).liveTime
+      let appUsers = await AppUser.find({ liveTime: { $gt: 0 }, publisherId })
+      appUsers.forEach(async appUser => {
+        appUser.timeRatio =
+          totalLiveTime == 0
+            ? 0
+            : ((appUser.liveTime * 100) / totalLiveTime).toFixed(2)
+        await appUser.save()
+      })
+    } catch (error) {
+      throw utils.buildErrObject(422, error.message)
+    }
+  }
 }

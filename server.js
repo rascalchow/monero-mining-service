@@ -7,6 +7,7 @@ const compression = require('compression')
 const helmet = require('helmet')
 const multipart = require('connect-multiparty')
 const cors = require('cors')
+const cron = require('node-cron')
 const passport = require('passport')
 const app = express()
 // const i18n = require('i18n')
@@ -14,7 +15,11 @@ const initMongo = require('./config/mongo')
 const path = require('path')
 const { seedAdminUser } = require('./app/controllers/auth')
 const { seedAppConfig } = require('./app/controllers/settings')
-
+// cron job
+const utils = require('./app/middleware/utils')
+const moment = require('moment')
+const mongoose = require('mongoose')
+const AppUserSession = require('./app/models/appUserSession')
 // Setup express server port from ENV, default: 3000
 app.set('port', process.env.PORT || 3000)
 
@@ -36,6 +41,22 @@ if (process.env.USE_REDIS === 'true') {
   })
   app.use(cache)
 }
+
+cron.schedule('*/15 * * * *', async () => {
+  console.log('updating session every 15 mins')
+  //find all sessions lastSeen is older than 10 mins
+  // and update duration
+  const lastTime = moment()
+    .subtract(15, 'minutes')
+    .toISOString()
+  const terminatedSessions = await AppUserSession.find({
+    lastSeen: { $lt: lastTime },
+    endAt: null
+  })
+  terminatedSessions.forEach(async session => {
+    utils.onSessionEnded(session)
+  })
+})
 
 // for parsing json
 app.use(

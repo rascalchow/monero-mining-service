@@ -111,35 +111,38 @@ const UserSchema = new mongoose.Schema(
     //Profile Info
     installs: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     uninstalls: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     live: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     liveTime: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     earnings: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     referrals: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     payments: {
       type: Number,
-      default: 0
-    },
-    totalDuration: {
-      type: Number,
-      default: 0
+      default: 0,
+      min: 0
     }
   },
   {
