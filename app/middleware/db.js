@@ -46,7 +46,6 @@ const cleanPaginationID = result => {
   return result
 }
 const listInitOptions = req => {
-  console.log(req.query)
   return new Promise(resolve => {
     const order = req.query.order || -1
     const sort = req.query.sort || 'createdAt'

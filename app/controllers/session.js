@@ -86,7 +86,6 @@ exports.endRunning = async (req, res) => {
  * @param {Object} res - response object
  */
 exports.runningNow = async (req, res) => {
-  console.log('runningnow', req.body)
   const sessionId = req.body['sessionId']
   if (sessionId) {
     //update lastSeen
@@ -97,14 +96,6 @@ exports.runningNow = async (req, res) => {
       }
       session.lastSeen = new Date()
       session.save()
-      // const result = await AppUserSession.findByIdAndUpdate(
-      //   // { sessionId: mongoose.Types.ObjectId(sessionId), endAt: null },
-      //   sessionId,
-      //   {
-      //     lastSeen: new Date()
-      //   }
-      // )
-      console.log(session)
       res.status(201).json(session)
     } catch (error) {
       utils.handleError(res, error)
