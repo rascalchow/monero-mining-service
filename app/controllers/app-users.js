@@ -196,6 +196,7 @@ exports.getAppUsers = async (req, res) => {
       sort = { [key]: query[key] }
       delete query[key]
     }
+    if (sort == null) sort = { createdAt: -1 }
   })
   const processQuery = opt => {
     opt.collation = { locale: 'en' }

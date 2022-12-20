@@ -68,7 +68,7 @@ exports.getItems = async (req, res) => {
       ]
     }
 
-    let sort = {}
+    let sort = null
     CONSTS.PUBLISHER.SORT_KEY.forEach(key => {
       if (query[key] && key !== 'status') {
         sort = { [key]: query[key] }
@@ -82,6 +82,7 @@ exports.getItems = async (req, res) => {
         sort['status'] = query['stat']
         delete query.stat
       }
+      if (sort == null) sort = { createdAt: -1 }
       return { ...opt, sort }
     }
 
