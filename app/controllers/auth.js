@@ -304,6 +304,7 @@ const registerUser = async (req, res) => {
     // if (invite.refereeEmail !== req.email) {
     //   throw utils.buildErrObject(400, 'WRONG_EMAIL')
     // }
+    
     //register
     const publisherKey = await generatePubliserKey()
     const user = await User.create({

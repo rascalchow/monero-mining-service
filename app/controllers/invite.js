@@ -76,6 +76,24 @@ exports.create = async (req, res) => {
   }
 }
 
+
+/**
+ * Delete invite function called by route
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+ exports.remove = async (req, res) => {
+  const {id} = req.params
+  try {
+    req = matchedData(req)
+    const publisherId = (await model.findById(id)).referrerId
+    await db.deleteItem(id, model)
+    res.status(200).json({publisherId})
+  } catch (error) {
+    utils.handleError(res, error)
+  }
+}
+
 /**
  * Generates a random unique referral code
  */

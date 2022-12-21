@@ -34,6 +34,17 @@ router.post(
   controller.create
 )
 
+/*
+ * Delete invite route
+ */
+router.delete(
+  '/:id',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  trimRequest.all,
+  controller.remove
+)
+
 
 /*
  * Get check invite route
