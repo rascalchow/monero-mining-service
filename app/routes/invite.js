@@ -33,4 +33,17 @@ router.post(
   trimRequest.all,
   controller.create
 )
+
+
+/*
+ * Get check invite route
+ */
+router.get(
+  '/check-code/:id',
+  // requireAuth,
+  // AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  trimRequest.all,
+  controller.checkCode
+)
+
 module.exports = router

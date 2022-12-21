@@ -276,26 +276,34 @@ const passwordsDoNotMatch = async user => {
  * @param {Object} req - request object
  */
 const registerUser = async (req, res) => {
+  const refererId = req['id']
+  const referralCode = req['referral']
+  if (refererId) delete(req['id'])
+  if (referralCode) delete req['referral']
   try {
-    const referralCode = req['referral']
     if (!referralCode) {
-      throw utils.buildErrObject(400, 'REFERRAL_CODE_NOT_EXIST')
+      throw utils.buildErrObject(400, 'REFERRAL_CODE_DOES_NOT_EXIST')
     }
-    delete req['referral']
+    if (!refererId) {
+      throw utils.buildErrObject(400, 'REFERRAL_ID_DOES_NOT_EXIST')
+    }
     // check if there is referral code in invite collection and not expired
-    const invite = await Invite.findOne({ code: referralCode })
+    const invite = await Invite.findById(refererId)
     if (!invite) {
-      throw utils.buildErrObject(400, 'WRONG_REFERRAL_CODE')
-    }
-    if (invite.expired) {
-      throw utils.buildErrObject(400, 'REFERRAL_ALREADY_EXPIRED')
+      throw utils.buildErrObject(400, 'NO_REFERRALS')
     }
     if (invite.status == CONSTS.INVITE.STATUS.SIGNUP) {
       throw utils.buildErrObject(400, 'USER_ALREADY_SIGNED_UP')
     }
-    if (invite.refereeEmail !== req.email) {
-      throw utils.buildErrObject(400, 'WRONG_EMAIL')
+    if (invite.expired) {
+      throw utils.buildErrObject(400, 'REFERRAL_ALREADY_EXPIRED')
     }
+    if (invite.code !== referralCode) {
+      throw utils.buildErrObject(400, 'REFERRAL_CODE_DOES_NOT_MATCH')
+    }
+    // if (invite.refereeEmail !== req.email) {
+    //   throw utils.buildErrObject(400, 'WRONG_EMAIL')
+    // }
     //register
     const publisherKey = await generatePubliserKey()
     const user = await User.create({

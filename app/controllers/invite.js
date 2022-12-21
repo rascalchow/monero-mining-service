@@ -9,7 +9,7 @@ const { INVITE } = require('../consts')
 const db = require('../middleware/db')
 const mongoose = require('mongoose')
 
-const REFERRAL_CODE_LENGTH = 12
+const REFERRAL_CODE_LENGTH = 6
 
 /**
  * Get invites function called by route
@@ -95,10 +95,6 @@ const generateCode = async () => {
   return key
 }
 
-/**
- * Creates a new item in database
- * @param {Object} req - request object
- */
 const createItem = async req => {
   return new Promise((resolve, reject) => {
     const invite = new model({
@@ -113,4 +109,44 @@ const createItem = async req => {
       resolve(item)
     })
   })
+}
+
+/**
+ * check invite code in database
+ * @param {Object} req - request object
+ */
+exports.checkCode = async (req, res) => {
+  const { id } = req.params
+  try {
+    const invite = (await model.findById(id)) ?? {}
+    if (
+      invite.expired === true ||
+      invite.status !== 'invited' ||
+      invite.acceptedAt !== null
+    ) {
+      utils.handleErrorV2(res, 'INVALIDE_CODE')
+    } else {
+      const refereeEmail = invite.refereeEmail
+      const referrerId = invite.referrerId
+      const referrer = await User.findById(referrerId).select(
+        'name email phone companyName application contact country instantMessenger website moreInformation'
+      )
+      utils.handleSuccess(res, 201, {
+        _id: referrer._id,
+        email: referrer.email,
+        name: referrer.name,
+        phone: referrer.phone,
+        companyName: referrer.companyName,
+        application: referrer.application,
+        contact: referrer.contact,
+        country: referrer.country,
+        instantMessenger: referrer.instantMessenger,
+        website: referrer.website,
+        moreInformation: referrer.moreInformation,
+        refereeEmail
+      })
+    }
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
 }
