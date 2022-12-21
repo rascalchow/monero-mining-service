@@ -122,9 +122,9 @@ exports.checkCode = async (req, res) => {
     if (
       invite.expired === true ||
       invite.status !== 'invited' ||
-      invite.acceptedAt !== null
+      !!invite.acceptedAt 
     ) {
-      utils.handleErrorV2(res, 'INVALIDE_CODE')
+      utils.handleErrorV2(res, 'INVALID_CODE')
     } else {
       const refereeEmail = invite.refereeEmail
       const referrerId = invite.referrerId
