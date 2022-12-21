@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const mongoose = require('mongoose')
 const utils = require('../middleware/utils')
 const { matchedData } = require('express-validator')
 const uuid = require('uuid')
@@ -7,7 +8,7 @@ const model = require('../models/invite')
 const User = require('../models/user')
 const { INVITE } = require('../consts')
 const db = require('../middleware/db')
-const mongoose = require('mongoose')
+const CONSTS = require('../consts')
 
 const REFERRAL_CODE_LENGTH = 6
 
@@ -76,19 +77,18 @@ exports.create = async (req, res) => {
   }
 }
 
-
 /**
  * Delete invite function called by route
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
- exports.remove = async (req, res) => {
-  const {id} = req.params
+exports.remove = async (req, res) => {
+  const { id } = req.params
   try {
     req = matchedData(req)
     const publisherId = (await model.findById(id)).referrerId
     await db.deleteItem(id, model)
-    res.status(200).json({publisherId})
+    res.status(200).json({ publisherId })
   } catch (error) {
     utils.handleError(res, error)
   }
@@ -132,6 +132,7 @@ const createItem = async req => {
 /**
  * check invite code in database
  * @param {Object} req - request object
+ * @param {Object} res - response object
  */
 exports.checkCode = async (req, res) => {
   const { id } = req.params
@@ -140,7 +141,7 @@ exports.checkCode = async (req, res) => {
     if (
       invite.expired === true ||
       invite.status !== 'invited' ||
-      !!invite.acceptedAt 
+      !!invite.acceptedAt
     ) {
       utils.handleErrorV2(res, 'INVALID_CODE')
     } else {
@@ -167,4 +168,40 @@ exports.checkCode = async (req, res) => {
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
+}
+
+/**
+ * get referrals in database
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+
+exports.getReferrals = async (req, res) => {
+  const { id } = req.params
+  const query = await db.checkQueryString(req.query)
+  if (query.search) {
+    const search = query.search
+    delete query.search
+    query['$or'] = [{ companyName: { $regex: `.*${search}.*`, $options: 'i' } }]
+  }
+  query.refUser1Id = id
+
+  let sort = null
+  CONSTS.INVITE.REFERRALS_SORT_KEY.forEach(key => {
+    if (query[key] && key !== 'status') {
+      sort = { [key]: query[key] }
+      delete query[key]
+    }
+  })
+  const processQuery = opt => {
+    opt.collation = { locale: 'en' }
+    if (!!query && query['stat']) {
+      sort = { ...sort, status: query['stat'] }
+      delete query.stat
+    }
+    if (sort == null) sort = { createdAt: -1 }
+    return { ...opt, sort }
+  }
+  const data = await db.getItems(req, User, query, processQuery)
+  res.status(200).json(data)
 }

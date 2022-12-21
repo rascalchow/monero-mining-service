@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose')
 const path = require('path')
 const User = require('../models/user')
 const UserAccess = require('../models/userAccess')
@@ -276,19 +277,33 @@ const passwordsDoNotMatch = async user => {
  * @param {Object} req - request object
  */
 const registerUser = async (req, res) => {
-  const refererId = req['id']
+  const id = req['id'] //invite model id
   const referralCode = req['referral']
-  if (refererId) delete(req['id'])
+  if (id) delete req['id']
   if (referralCode) delete req['referral']
+
   try {
+    //update refUser1Id/refUser2Id
+    const invite = await Invite.findById(id)
+    const referrerId = invite.referrerId
+    req.refUser1Id = mongoose.Types.ObjectId(referrerId)
+    const referrer2 = await User.findById(referrerId)
+
+    if (!!referrer2 && referrer2.refUser1Id) {
+      req.refUser2Id = mongoose.Types.ObjectId(referrer2.refUser1Id)
+    }
+    // update referrals
+    await User.findByIdAndUpdate(referrerId, {
+      $inc: { referrals: 1 }
+    })
+    //register
     if (!referralCode) {
       throw utils.buildErrObject(400, 'REFERRAL_CODE_DOES_NOT_EXIST')
     }
-    if (!refererId) {
+    if (!id) {
       throw utils.buildErrObject(400, 'REFERRAL_ID_DOES_NOT_EXIST')
     }
     // check if there is referral code in invite collection and not expired
-    const invite = await Invite.findById(refererId)
     if (!invite) {
       throw utils.buildErrObject(400, 'NO_REFERRALS')
     }
@@ -304,8 +319,7 @@ const registerUser = async (req, res) => {
     // if (invite.refereeEmail !== req.email) {
     //   throw utils.buildErrObject(400, 'WRONG_EMAIL')
     // }
-    
-    //register
+
     const publisherKey = await generatePubliserKey()
     const user = await User.create({
       ...req,

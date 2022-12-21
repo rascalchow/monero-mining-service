@@ -134,15 +134,24 @@ const UserSchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
+    payments: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     referrals: {
       type: Number,
       default: 0,
       min: 0
     },
-    payments: {
-      type: Number,
-      default: 0,
-      min: 0
+    refUser1Id: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    refUser2Id: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
     }
   },
   {

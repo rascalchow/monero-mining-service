@@ -11,7 +11,6 @@ const requireAuth = passport.authenticate('jwt', {
 const trimRequest = require('trim-request')
 const CONSTS = require('../consts')
 
-
 /*
  * Get invite route
  */
@@ -45,16 +44,20 @@ router.delete(
   controller.remove
 )
 
-
 /*
  * Get check invite route
  */
+router.get('/check-code/:id', trimRequest.all, controller.checkCode)
+
+/*
+ * Get referrals route
+ */
 router.get(
-  '/check-code/:id',
-  // requireAuth,
-  // AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  '/referrals/:id',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
   trimRequest.all,
-  controller.checkCode
+  controller.getReferrals
 )
 
 module.exports = router

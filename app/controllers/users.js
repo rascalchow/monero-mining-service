@@ -78,8 +78,8 @@ exports.getItems = async (req, res) => {
 
     const processQuery = opt => {
       opt.collation = { locale: 'en' }
-      if (query['stat']) {
-        sort['status'] = query['stat']
+      if (!!query && query['stat']) {
+        sort = { ...sort, status: query['stat'] }
         delete query.stat
       }
       if (sort == null) sort = { createdAt: -1 }
