@@ -67,7 +67,6 @@ const listInitOptions = req => {
       limit,
       search
     }
-
     if (populate) {
       options.populate = populate
     }

@@ -46,18 +46,13 @@ module.exports = {
     ]
   },
   INVITE: {
-    STATUSES:['invited','signup'],
-    STATUS:{
-      INVITED:'invited',
-      SIGNUP:'signup'
+    STATUSES: ['invited', 'signup'],
+    STATUS: {
+      INVITED: 'invited',
+      SIGNUP: 'signup'
     },
-    SORT_KEY:[
-      'refereeEmail',
-      'code',
-      'status',
-      'acceptedAt',
-      'createdAt'
-    ]
+    SORT_KEY: ['refereeEmail', 'code', 'status', 'acceptedAt', 'createdAt'],
+    REFERRALS_SORT_KEY: ['status', 'companyName', 'referrals']
   },
   PHONE_REGEX: /^[+]?[(]?[0-9]{3}[)]?[-s.]?[0-9]{3}[-s.]?[0-9]{4,6}$/,
   DEFAULT_EULA_TEMPLATE: 'This is {{companyName}}. This is {{productName}}.',
