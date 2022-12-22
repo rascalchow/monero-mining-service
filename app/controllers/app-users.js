@@ -220,7 +220,6 @@ exports.getInstalledUsers = async (req, res) => {
       status: type,
       installedAt: query
     })
-    // console.log(filterAppUserInfo(result,param))
     return res.status(200).json({
       info: result,
       count: filterAppUserInfo(result, param)

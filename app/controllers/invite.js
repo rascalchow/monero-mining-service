@@ -86,8 +86,17 @@ exports.remove = async (req, res) => {
   const { id } = req.params
   try {
     req = matchedData(req)
-    const publisherId = (await model.findById(id)).referrerId
+    const invite = await model.findById(id)
+    const publisherId = invite.referrerId
+    //check if the referree has already signed up
+    if (invite.expired || invite.status !== 'invited' || !!invite.acceptedAt) {
+      throw utils.buildErrObject(400, 'REFERREE_HAS_ALREADY_SIGNED_UP')
+    }
+    //delete
     await db.deleteItem(id, model)
+    // await User.findByIdAndUpdate(publisherId, {
+    //   $inc: { referrals: -1 }
+    // })
     res.status(200).json({ publisherId })
   } catch (error) {
     utils.handleError(res, error)
@@ -143,7 +152,7 @@ exports.checkCode = async (req, res) => {
       invite.status !== 'invited' ||
       !!invite.acceptedAt
     ) {
-      utils.handleErrorV2(res, 'INVALID_CODE')
+      utils.handleErrorV2(res, 'USER_HAS_ALREADY_SIGNED_UP')
     } else {
       const refereeEmail = invite.refereeEmail
       const referrerId = invite.referrerId
@@ -166,7 +175,7 @@ exports.checkCode = async (req, res) => {
       })
     }
   } catch (error) {
-    utils.handleErrorV2(res, error)
+    utils.handleErrorV2(res, 'INVALID_URL')
   }
 }
 

@@ -1,6 +1,5 @@
 const model = require('../models/user')
-const appUserModel = require('../models/appUser')
-const profileModel = require('../models/userProfile')
+const Invite = require('../models/invite')
 const uuid = require('uuid')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
@@ -156,6 +155,7 @@ exports.updateItem = async (req, res) => {
     if (!user) {
       utils.buildErrObject(422, 'USER_NOT_FOUND')
     }
+    console.log(ressult)
     await user.save()
     res.status(200).json(await db.getItem(id, model, null))
   } catch (error) {
@@ -192,6 +192,14 @@ exports.deleteItem = async (req, res) => {
   try {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
+
+    //delete all references
+    // await Invite.deleteMany({
+    //   referrerId: id
+    // })
+    // await model.updateMany({ refUser1Id: id }, { refUser1Id: null })
+    // await model.updateMany({ refUser2Id: id }, { refUser2Id: null })
+    
     res.status(200).json(await db.deleteItem(id, model))
   } catch (error) {
     utils.handleError(res, error)
