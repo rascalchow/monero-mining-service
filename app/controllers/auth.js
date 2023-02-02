@@ -746,7 +746,8 @@ exports.seedAdminUser = async () => {
       companyName: 'Nurev',
       application: 'Nurev',
       contact: 'Nurev',
-      website: 'Nurev'
+      website: 'Nurev',
+      refUser1Id: mongoose.Types.ObjectId(),
     }
     const user = await User.findOne({
       email: USER.email

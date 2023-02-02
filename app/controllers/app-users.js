@@ -158,7 +158,40 @@ exports.getAppStats = async (req, res) => {
     const devices = await AppUser.count({
       publisherId: req.user._id
     })
-    utils.handleSuccess(res, 200, { installed, uninstalled, devices })
+    const totalCount = await User.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalLiveTime: { $sum: '$liveTime' },
+          totalLive: { $sum: '$live' },
+          totalInstalls: { $sum: '$installs' },
+          totalUninstalls: { $sum: '$uninstalls' }
+        }
+      }
+    ])
+    const {
+      totalLiveTime,
+      totalLive,
+      totalInstalls,
+      totalUninstalls
+    } = totalCount[0]
+    const user = await db.getItem(req.user._id, User)
+    const liveTimeRate = totalLiveTime == 0 ? 0 : user.liveTime / totalLiveTime
+    const liveRate = totalLive == 0 ? 0 : user.live / totalLive
+    const installsRate = totalInstalls == 0 ? 0 : user.installs / totalInstalls
+    const uninstallsRate =
+      totalUninstalls == 0 ? 0 : user.uninstalls / totalUninstalls
+
+    res.status(200).json({
+      ...user.toObject(),
+      liveTimeRate,
+      liveRate,
+      installsRate,
+      uninstallsRate,
+      devices,
+      lastPayment: 0
+    });
+
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
