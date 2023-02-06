@@ -52,7 +52,7 @@ router.post(
 )
 
 /*
- * Get installed/uninstalled app counts
+ * Get stats of live
  */
 router.get(
   '/user/stats',
@@ -60,6 +60,16 @@ router.get(
   trimRequest.all,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   controller.getAppStats
+)
+/*
+ * Get stats of live
+ */
+router.get(
+  '/publisher/install',
+  requireAuth,
+  trimRequest.all,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  controller.getPublisherInstallStats
 )
 
 /*
