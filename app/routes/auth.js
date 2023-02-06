@@ -72,4 +72,16 @@ router.patch(
   validate.changePassword,
   controller.changePassword
 )
+
+/*
+ * Update item route
+ */
+router.patch(
+  '/profile',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLES),
+  trimRequest.all,
+  controller.updateProfile
+)
+
 module.exports = router

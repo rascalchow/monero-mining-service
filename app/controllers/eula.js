@@ -27,7 +27,7 @@ exports.updateUserEula = async (req, res) => {
     const userEula = await UserEula.findOneAndUpdate(
       { publisherId: req.user._id },
       { eula: data.eula },
-      { new: true }
+      { new: true, upsert: true }
     )
     utils.handleSuccess(res, 201, userEula)
   } catch (error) {
