@@ -184,14 +184,15 @@ exports.getAppStats = async (req, res) => {
 
     res.status(200).json({
       ...user.toObject(),
+      installed,
+      uninstalled,
       liveTimeRate,
       liveRate,
       installsRate,
       uninstallsRate,
       devices,
       lastPayment: 0
-    });
-
+    })
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
@@ -289,3 +290,78 @@ const filterAppUserInfo = (installs, dates) => {
   }
   return result
 }
+
+/**
+ * Get current live time, date ranged live stats
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.getPublisherInstallStats = async (req, res) => {
+  const param = req.query
+  const id = req.user._id
+  const now = new Date()
+  const query = {
+    $exists: true,
+    $gte: new Date(param[0]),
+    $lte: new Date(param[1])
+  }
+  try {
+    const chartRes = await AppUser.find({
+      publisherId: id,
+      status: 'installed',
+      installedAt: query
+    })
+    const { result: processedResultForChart, max } = filterPublisherInstalls(chartRes, param)
+    const installsCount = chartRes.length
+    const uninstallsCount = await AppUser.count({
+      publisherId: id,
+      status: 'uninstalled',
+      uninstalledAt: query
+    })
+    res.status(200).json({
+      labels: Object.keys(processedResultForChart),
+      data: Object.values(processedResultForChart),
+      max,
+      count: processedResultForChart.length,
+      installsCount,
+      uninstallsCount,
+      retentionRate: (
+        ((installsCount - uninstallsCount) / installsCount) *
+        100
+      ).toFixed(2)
+    })
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+}
+
+const filterPublisherInstalls = (installs, dates) => {
+  const DAY = 86400000
+  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
+  const now = new Date()
+  let result = {}, max = 0;
+  for (let i = 0; i < duration; i++) {
+    let current = new Date(new Date(dates[0]).valueOf() + i * DAY);
+    let count = installs.filter(it => it.installedAt.toDateString() == current.toDateString()).length
+    result[getLabel(current, 'month')] = count
+    max = Math.max(max, count);
+  }
+  return { result, max }
+}
+
+const getLabel = (date, type) => {
+  const timeOpt = {
+    hour: 'numeric',
+    hour12: false
+  }
+  const dateOpt = {
+    month: 'numeric',
+    day: 'numeric'
+  }
+  if (type == 'day') {
+    return new Intl.DateTimeFormat('en-US', timeOpt).format(date)
+  } else if (type == 'month') {
+    return new Intl.DateTimeFormat('en-US', dateOpt).format(date)
+  }
+}
+

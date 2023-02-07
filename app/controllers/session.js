@@ -5,6 +5,8 @@ const User = require('../models/user')
 const utils = require('../middleware/utils')
 const mongoose = require('mongoose')
 const moment = require('moment')
+const db = require('../middleware/db')
+const CONSTS = require('../consts')
 /********************
  * Public functions *
  ********************/
@@ -139,92 +141,168 @@ exports.getLiveTime = async (req, res) => {
   }
 
   try {
-    if (dataType == 'CHART') {
-      const chartRes = await AppUserSession.find({
-        publisherId: id,
-        endAt: query
-      })
-      const processedResult = filterLiveTimeInfo(chartRes, param)
-      return res.status(200).json({
-        labels: Object.keys(processedResult.data),
-        data: Object.values(processedResult.data),
-        max: processedResult.max,
-        count: processedResult.count
-      })
-    } else if (dataType == 'STATIC') {
-      const staticRes = await AppUserSession.aggregate().facet({
-        daily: [
-          {
-            $match: {
-              $and: [
-                { publisherId: mongoose.Types.ObjectId(id) },
-                { endAt: queryOneDay }
-              ]
-            }
-          }
-        ],
-        monthly: [
-          {
-            $match: {
-              $and: [
-                { publisherId: mongoose.Types.ObjectId(id) },
-                { endAt: queryOneMonth }
-              ]
-            }
-          }
-        ],
-        all: [
-          {
-            $match: {
-              $and: [
-                { publisherId: mongoose.Types.ObjectId(id) },
-                { endAt: queryAll }
-              ]
-            }
-          }
-        ]
-      })
-      const { daily, monthly, all } = staticRes[0]
-      const dailyInfo = filterLiveTimeInfo(daily, [yesterday, now])
-      const monthlyInfo = filterLiveTimeInfo(monthly, [lastMonth, now])
-      const allInfo = filterLiveTimeInfo(all, [allTime, now])
-      const data = {
-        daily: {
-          labels: Object.keys(dailyInfo.data),
-          data: Object.values(dailyInfo.data),
-          max: dailyInfo.max,
-          count: dailyInfo.count
-        },
-        monthly: {
-          labels: Object.keys(monthlyInfo.data),
-          data: Object.values(monthlyInfo.data),
-          max: monthlyInfo.max,
-          count: monthlyInfo.count
-        },
-        all: {
-          labels: Object.keys(allInfo.data),
-          data: Object.values(allInfo.data),
-          max: allInfo.max,
-          count: allInfo.count
-        }
-      }
-      return res.status(200).json(data)
-    } else {
-      throw utils.buildErrObject(400, 'BAD_REQUEST_OF_TYPE')
-    }
+    const chartRes = await AppUserSession.find({
+      publisherId: id,
+      endAt: query
+    })
+    const processedResult = filterLiveTimeInfo(chartRes, param)
+    return res.status(200).json({
+      labels: Object.keys(processedResult.data),
+      data: Object.values(processedResult.data),
+      max: processedResult.max,
+      count: processedResult.count
+    })
   } catch (error) {
     throw utils.buildErrObject(422, error.message)
   }
 }
+/**
+ * Get current live time, date ranged live stats
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.getPublisherLiveTimeStat = async (req, res) => {
+  const { param } = req.query
+  const id = req.user._id
+  const now = new Date()
+  let yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  let lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
+  let allTime = new Date(now.getFullYear(), now.getMonth() - 3)
+  const query = {
+    $exists: true,
+    $gte: new Date(param[0]),
+    $lte: new Date(param[1])
+  }
+  try {
+    const chartRes = await AppUserSession.find({
+      publisherId: id,
+      $or: [
+        {
+          endAt: query
+        },
+        {
+          endAt: {
+            $exists: false
+          },
+          startAt: {
+            $lte: new Date(param[1])
+          }
+        }
+      ]
+    })
+    const processedResultForChart = filterLiveTimeInfo(chartRes, param)
+    const activeSessionUserIds = await AppUserSession.aggregate([
+      {
+        $match: {
+          publisherId: id,
+          $or: [
+            {
+              endAt: query
+            },
+            {
+              endAt: {
+                $exists: false
+              },
+              startAt: {
+                $lte: new Date(param[1])
+              }
+            }
+          ]
+        }
+      },
+      { $group: { _id: '$userId' } },
+      {
+        $project: {
+          userId: 1
+        }
+      }
+    ])
+    const totalActiveUsers = activeSessionUserIds.length
+    const current = (await User.findById(id)).live
+    
+    const todayBegin = new Date(new Date().toDateString())
+    const todaySessions = await AppUserSession.find(
+      {
+          publisherId: id,
+          $or: [
+            {
+              endAt: {
+                $exists: true,
+                $gte: todayBegin,
+              }
+            },
+            {
+              endAt: {
+                $exists: false
+              }
+            }
+          ]
+      })
 
-const filterLiveTimeInfo = (installs, dates) => {
+    const liveTimeSum = todaySessions.reduce((sum, cur) => {
+      let start = Math.max(cur.startAt.valueOf(), todayBegin.valueOf());
+      if (cur.endAt) return sum + (cur.endAt.valueOf() - start) / 1000;
+      else return sum + (Date.now() - start) / 1000;
+    }, 0)
+
+    const appUserQuery = await db.checkQueryString(req.query)
+    if (appUserQuery.search) {
+      const search = appUserQuery.search
+      delete appUserQuery.search
+      appUserQuery['$or'] = [
+        { device: { $regex: `.*${search}.*`, $options: 'i' } },
+        { userKey: { $regex: `.*${search}.*`, $options: 'i' } },
+        { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
+      ]
+    }
+    appUserQuery.publisherId = id
+    let sort = null
+    CONSTS.APP_USER.SORT_KEY.forEach(key => {
+      if (appUserQuery[key]) {
+        sort = { [key]: appUserQuery[key] }
+        delete appUserQuery[key]
+      }
+      if (sort == null) sort = { createdAt: -1 }
+    })
+    appUserQuery._id = {
+      $in: activeSessionUserIds.map(it => it._id)
+    }
+
+    const processQuery = opt => {
+      opt.collation = { locale: 'en' }
+      return { ...opt, sort }
+    }
+
+    const activeUsers = await db.getItems(
+      req,
+      AppUser,
+      appUserQuery,
+      processQuery
+    )
+
+    res.status(200).json({
+      labels: Object.keys(processedResultForChart.data),
+      data: Object.values(processedResultForChart.data),
+      max: processedResultForChart.max,
+      count: processedResultForChart.count,
+      current,
+      activeUsers,
+      totalActiveUsers,
+      liveTimeSum
+    })
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+}
+
+const filterLiveTimeInfo = (sessions, dates) => {
   const DAY = 86400000
-  installs.sort((a, b) => {
+  sessions.sort((a, b) => {
     return b.duration - a.duration
   })
-  const max = installs[0]?.duration
+  const max = sessions[0]?.duration
   let count = 0
-  installs.forEach((install, index) => {
+  sessions.forEach((install, index) => {
     count = count + install.duration
   })
   let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
@@ -233,7 +311,7 @@ const filterLiveTimeInfo = (installs, dates) => {
   duration = duration == 1 ? 24 : duration
 
   let toObject = {}
-  installs.forEach((install, index) => {
+  sessions.forEach((install, index) => {
     let label = getLabel(install.endAt, type)
     let count = install.duration
     toObject = {

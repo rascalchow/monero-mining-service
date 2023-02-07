@@ -155,7 +155,6 @@ exports.updateItem = async (req, res) => {
     if (!user) {
       utils.buildErrObject(422, 'USER_NOT_FOUND')
     }
-    console.log(ressult)
     await user.save()
     res.status(200).json(await db.getItem(id, model, null))
   } catch (error) {

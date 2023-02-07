@@ -35,6 +35,14 @@ router.get(
   controller.getLiveTime
 )
 
+router.get(
+  '/publisher/livetime',
+  requireAuth,
+  trimRequest.all,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  controller.getPublisherLiveTimeStat
+)
+
 router.post(
   '/running-now',
   // requireToken,

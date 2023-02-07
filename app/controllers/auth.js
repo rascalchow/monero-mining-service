@@ -14,6 +14,7 @@ const { addHours } = require('date-fns')
 const { matchedData } = require('express-validator')
 const auth = require('../middleware/auth')
 const emailer = require('../middleware/emailer')
+const db = require('../middleware/db')
 const CONSTS = require('../consts')
 
 const HOURS_TO_BLOCK = 2
@@ -759,5 +760,49 @@ exports.seedAdminUser = async () => {
     }
   } catch (err) {
     console.log(err)
+  }
+}
+
+
+/**
+ * Gets profile from database by id
+ * @param {string} id - user id
+ */
+const getProfileFromDB = async id => {
+  return new Promise((resolve, reject) => {
+    User.findById(
+      id,
+      '-updatedAt -createdAt',
+      { populate: 'userProfileId' },
+      (err, user) => {
+        utils.itemNotFound(err, user, reject, 'NOT_FOUND')
+        resolve(user)
+      }
+    )
+  })
+}
+
+/**
+ * Update item function called by route
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const id = req.user._id;
+    const { email } = req.body
+    let user = null
+    const doesEmailExists = await emailer.emailExistsExcludingMyself(id, email)
+    if (!doesEmailExists) {
+      req.body.status = CONSTS.USER.STATUS.PENDING;
+      user = await db.updateItem(id, User, req.body)
+    }
+    if (!user) {
+      utils.buildErrObject(422, 'USER_NOT_FOUND')
+    }
+    await user.save()
+    res.status(200).json(await getProfileFromDB(id))
+  } catch (error) {
+    utils.handleError(res, error)
   }
 }
