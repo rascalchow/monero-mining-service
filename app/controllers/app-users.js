@@ -338,11 +338,9 @@ const filterPublisherInstalls = (installs, dates) => {
   let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
   const now = new Date()
   let result = {}, max = 0;
-  console.log(duration)
   for (let i = 0; i < duration; i++) {
     let current = new Date(new Date(dates[0]).valueOf() + i * DAY);
     let count = installs.filter(it => it.installedAt.toDateString() == current.toDateString()).length
-    console.log('shin', getLabel(current, 'month'), count, current)
     result[getLabel(current, 'month')] = count
     max = Math.max(max, count);
   }

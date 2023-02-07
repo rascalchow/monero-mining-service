@@ -145,7 +145,6 @@ exports.getLiveTime = async (req, res) => {
       publisherId: id,
       endAt: query
     })
-    console.log(chartRes)
     const processedResult = filterLiveTimeInfo(chartRes, param)
     return res.status(200).json({
       labels: Object.keys(processedResult.data),
@@ -218,13 +217,35 @@ exports.getPublisherLiveTimeStat = async (req, res) => {
         }
       }
     ])
-    console.log({ activeSessionUserIds })
     const totalActiveUsers = activeSessionUserIds.length
     const current = (await User.findById(id)).live
+    
+    const todayBegin = new Date(new Date().toDateString())
+    const todaySessions = await AppUserSession.find(
+      {
+          publisherId: id,
+          $or: [
+            {
+              endAt: {
+                $exists: true,
+                $gte: todayBegin,
+              }
+            },
+            {
+              endAt: {
+                $exists: false
+              }
+            }
+          ]
+      })
 
-    console.log('reqquery', req.query)
+    const liveTimeSum = todaySessions.reduce((sum, cur) => {
+      let start = Math.max(cur.startAt.valueOf(), todayBegin.valueOf());
+      if (cur.endAt) return sum + (cur.endAt.valueOf() - start) / 1000;
+      else return sum + (Date.now() - start) / 1000;
+    }, 0)
+
     const appUserQuery = await db.checkQueryString(req.query)
-    console.log({ appUserQuery })
     if (appUserQuery.search) {
       const search = appUserQuery.search
       delete appUserQuery.search
@@ -246,7 +267,6 @@ exports.getPublisherLiveTimeStat = async (req, res) => {
     appUserQuery._id = {
       $in: activeSessionUserIds.map(it => it._id)
     }
-    console.log({ appUserQuery })
 
     const processQuery = opt => {
       opt.collation = { locale: 'en' }
@@ -267,7 +287,8 @@ exports.getPublisherLiveTimeStat = async (req, res) => {
       count: processedResultForChart.count,
       current,
       activeUsers,
-      totalActiveUsers
+      totalActiveUsers,
+      liveTimeSum
     })
   } catch (error) {
     utils.handleErrorV2(res, error)

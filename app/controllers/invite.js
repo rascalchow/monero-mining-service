@@ -202,6 +202,9 @@ exports.getReferrals = async (req, res) => {
       delete query[key]
     }
   })
+  /**
+   * TODO: Commissions Will be calculated by 5% for one-level referrer, 2.5% for two-level referrer.
+   */
   const processQuery = opt => {
     opt.collation = { locale: 'en' }
     if (!!query && query['stat']) {
