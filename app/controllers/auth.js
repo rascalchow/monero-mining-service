@@ -18,7 +18,7 @@ const db = require('../middleware/db')
 const CONSTS = require('../consts')
 
 const HOURS_TO_BLOCK = 2
-const LOGIN_ATTEMPTS = 5
+const LOGIN_ATTEMPTS = 10
 const PUBLISHER_KEY_LENGTH = 8
 
 /*********************
@@ -748,7 +748,7 @@ exports.seedAdminUser = async () => {
       application: 'Nurev',
       contact: 'Nurev',
       website: 'Nurev',
-      refUser1Id: mongoose.Types.ObjectId(),
+      refUser1Id: mongoose.Types.ObjectId()
     }
     const user = await User.findOne({
       email: USER.email
@@ -762,7 +762,6 @@ exports.seedAdminUser = async () => {
     console.log(err)
   }
 }
-
 
 /**
  * Gets profile from database by id
@@ -789,12 +788,12 @@ const getProfileFromDB = async id => {
  */
 exports.updateProfile = async (req, res) => {
   try {
-    const id = req.user._id;
+    const id = req.user._id
     const { email } = req.body
     let user = null
     const doesEmailExists = await emailer.emailExistsExcludingMyself(id, email)
     if (!doesEmailExists) {
-      req.body.status = CONSTS.USER.STATUS.PENDING;
+      req.body.status = CONSTS.USER.STATUS.PENDING
       user = await db.updateItem(id, User, req.body)
     }
     if (!user) {
