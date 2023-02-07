@@ -23,6 +23,14 @@ exports.install = [
 ]
 
 exports.uninstall = [
+  check('publisherKey')
+    .exists()
+    .withMessage('MISSING')
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY')
+    .matches('[0-9a-zA-Z]{8}')
+    .withMessage('PUBLISHER_KEY_IS_NOT_VALID'),
   check('userKey')
     .exists()
     .withMessage('MISSING')

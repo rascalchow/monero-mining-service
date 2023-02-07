@@ -184,6 +184,8 @@ exports.getAppStats = async (req, res) => {
 
     res.status(200).json({
       ...user.toObject(),
+      installed,
+      uninstalled,
       liveTimeRate,
       liveRate,
       installsRate,
