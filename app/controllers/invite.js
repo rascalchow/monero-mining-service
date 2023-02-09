@@ -202,6 +202,36 @@ exports.getReferrals = async (req, res) => {
       delete query[key]
     }
   })
+  const processQuery = opt => {
+    opt.collation = { locale: 'en' }
+    if (!!query && query['stat']) {
+      sort = { ...sort, status: query['stat'] }
+      delete query.stat
+    }
+    if (sort == null) sort = { createdAt: -1 }
+    return { ...opt, sort }
+  }
+  const data = await db.getItems(req, User, query, processQuery)
+  res.status(200).json(data)
+}
+
+exports.getPublisherReferrals = async (req, res) => {
+  const id = req.user._id;
+  const query = await db.checkQueryString(req.query)
+  if (query.search) {
+    const search = query.search
+    delete query.search
+    query['$or'] = [{ companyName: { $regex: `.*${search}.*`, $options: 'i' } }]
+  }
+  query.refUser1Id = id
+
+  let sort = null
+  CONSTS.INVITE.REFERRALS_SORT_KEY.forEach(key => {
+    if (query[key] && key !== 'status') {
+      sort = { [key]: query[key] }
+      delete query[key]
+    }
+  })
   /**
    * TODO: Commissions Will be calculated by 5% for one-level referrer, 2.5% for two-level referrer.
    */
