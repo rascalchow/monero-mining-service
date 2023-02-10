@@ -60,4 +60,15 @@ router.get(
   controller.getReferrals
 )
 
+/*
+ * Get referrals route
+ */
+router.get(
+  '/publisher/referrals',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  trimRequest.all,
+  controller.getPublisherReferrals
+)
+
 module.exports = router
