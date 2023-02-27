@@ -201,3 +201,14 @@ exports.rejectUser = [
     validationResult(req, res, next)
   }
 ]
+exports.setPrimaryUser = [
+  check('id')
+    .exists()
+    .withMessage('MISSING')
+    .not()
+    .isEmpty()
+    .withMessage('IS_EMPTY'),
+  (req, res, next) => {
+    validationResult(req, res, next)
+  }
+]

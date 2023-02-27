@@ -56,5 +56,9 @@ module.exports = {
   },
   PHONE_REGEX: /^[+]?[(]?[0-9]{3}[)]?[-s.]?[0-9]{3}[-s.]?[0-9]{4,6}$/,
   DEFAULT_EULA_TEMPLATE: 'This is {{companyName}}. This is {{productName}}.',
-  FILE_UPLOAD_DIR: 'uploads'
+  FILE_UPLOAD_DIR: 'uploads',
+  STEALTHEX: {
+    API_KEY: process.env.STEALTHEX_API_KEY,
+    BASE_URL: 'https://api.stealthex.io/api/v2/',
+  }
 }
