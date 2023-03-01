@@ -60,5 +60,6 @@ module.exports = {
   STEALTHEX: {
     API_KEY: process.env.STEALTHEX_API_KEY,
     BASE_URL: 'https://api.stealthex.io/api/v2/',
-  }
+    MONERO_REV_RATE: 1000,
+  },
 }

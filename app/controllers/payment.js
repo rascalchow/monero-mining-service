@@ -6,12 +6,14 @@ const PublisherReward = require('../models/publisherReward')
 const PublisherWithdraw = require('../models/publisherWithdraw')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
+const { transfer } = require('../services/stealthexApi')
+const { STEALTHEX: { MONERO_REV_RATE } } = require('../consts');
 
 /********************
  * Private functions *
  ********************/
 
-const rewardPublisher = async (publisherId, amount, rewardBlockId, reason, refferalId) => {
+const rewardPublisher = async (publisherId, amount, rewardBlockId, reason, referralId) => {
   await PublisherBalance.update({
     publisherId,
   }, {
@@ -50,8 +52,8 @@ exports.onBlockReward = async (req, res) => {
 
     // 1. Insert to RewardBlock table
     const reward = await RewardBlock.create({ value: req.monero });
-    const publisherRewardInRev = reward.value * process.env.MONERO_REV_RATE * 0.75;
-    const masterRewardInRev = reward.value * process.env.MONERO_REV_RATE * 0.25;
+    const publisherRewardInRev = reward.value * MONERO_REV_RATE * 0.75;
+    const masterRewardInRev = reward.value * MONERO_REV_RATE * 0.25;
 
     // 2. Calculate publishers rewards
     const master = await User.findOne({ isPrimary: true });
@@ -78,12 +80,23 @@ exports.onBlockReward = async (req, res) => {
 
     // 3. Insert Publisher Reward record
     // 4. Update publisher balance
-    const updates = [];
+    const rewardPromises = [];
+
     for (pubId in publishersLiveTime) {
       const amount = publisherRewardInRev * publishersLiveTime[pubId] / totalLiveTime;
-      updates.push(rewardPublisher(pubId, amount, reward._id, 'livetime', null));
+      const publisherReward = amount;
+      const pub = await User.findById(pubId);
+      if (pub.refUser1Id) {
+        rewardPromises.push(rewardPublisher(pub.refUser1Id, amount * 0.05, reward._id, 'livetime', null));
+        publisherReward -= amount * 0.05;
+      }
+      if (pub.refUser2Id) {
+        rewardPromises.push(rewardPublisher(pub.refUser2Id, amount * 0.025, reward._id, 'livetime', null));
+        publisherReward -= amount * 0.025;
+      }
+      rewardPromises.push(rewardPublisher(pubId, publisherReward, reward._id, 'livetime', null));
     }
-    await Promise.all(updates);
+    await Promise.all(rewardPromises);
 
     utils.handleSuccess(res, 201, {})
   } catch (error) {
@@ -102,9 +115,15 @@ exports.withdraw = async (req, res) => {
   try {
     // 1. Get the balance
     const publisher = await User.findById(req.user._id);
+    const balance = (await PublisherBalance.find({ publisherId: publisher._id }))?.balance || 0;
+    if (balance == 0) throw "No balance to withdraw";
+
     // 2. Update publisher balance
+    await PublisherBalance.findAndUpdate({ publisherId: publisher._id }, { balance: 0 });
     // 3. Insert publisher record
+    await PublisherWithdraw.create({ publisherId: publisher._id, balance });
     // 4. Transfer funds to publisher's Stealthex account
+    await transfer(req.payoutAddress, publisher.payoutCurrency, balance);
     utils.handleSuccess(res, 201, {})
   } catch (error) {
     utils.handleErrorV2(res, error)

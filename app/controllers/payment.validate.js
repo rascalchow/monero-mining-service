@@ -9,3 +9,12 @@ exports.onBlockReward = [
     validationResult(req, res, next)
   }
 ]
+
+exports.withdraw = [
+  check('payoutAddress')
+    .exists()
+    .withMessage('MISSING'),
+  (req, res, next) => {
+    validationResult(req, res, next)
+  }
+]

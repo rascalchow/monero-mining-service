@@ -30,6 +30,7 @@ router.post(
   requireAuth,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
+  validate.withdraw,
   controller.withdraw
 )
 
