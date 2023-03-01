@@ -4,7 +4,7 @@ const mongoosePaginate = require('mongoose-paginate-v2')
 const PublisherRewardSchema = new mongoose.Schema(
   {
     publisherId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       required: true,
     },
     amount: { // newly added rev balance
@@ -12,7 +12,7 @@ const PublisherRewardSchema = new mongoose.Schema(
       required: true,
     },
     rewardBlockId: { //  id of reward block how this publisher got paid
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       required: true,
     },
     reason: {

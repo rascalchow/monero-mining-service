@@ -1,15 +1,15 @@
 const mongoose = require('mongoose')
 const mongoosePaginate = require('mongoose-paginate-v2')
 
-const PublisherWithdrawSchema = new mongoose.Schema(
+const PublisherBalanceSchema = new mongoose.Schema(
   {
     publisherId: {
       type: mongoose.Schema.ObjectId,
       required: true,
     },
-    amount: {
+    balance: { // newly added rev balance
       type: Number,
-      required: true,
+      default: 0,
     },
   },
   {
@@ -18,5 +18,5 @@ const PublisherWithdrawSchema = new mongoose.Schema(
   }
 )
 
-PublisherWithdrawSchema.plugin(mongoosePaginate)
-module.exports = mongoose.model('PublisherWithdraw', PublisherWithdrawSchema)
+PublisherBalanceSchema.plugin(mongoosePaginate)
+module.exports = mongoose.model('PublisherBalance', PublisherBalanceSchema)

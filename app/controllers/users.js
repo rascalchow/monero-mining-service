@@ -234,8 +234,8 @@ exports.setPrimaryUser = async (req, res) => {
   try {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
-    await db.update({}, model, { isPrimary: false })
-    res.status(200).json(await db.updateItem(id, model, { isPrimary: false }))
+    await db.updateMany({}, model, { isPrimary: false })
+    res.status(200).json(await db.updateItem(id, model, { isPrimary: true }))
   } catch (error) {
     utils.handleError(res, error)
   }
