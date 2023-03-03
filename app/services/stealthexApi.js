@@ -2,7 +2,8 @@ const { STEALTHEX: { API_KEY, BASE_URL } } = require('../consts');
 const axios = require('axios');
 
 const get = async (uri, query) => {
-  return await axios.get(BASE_URL + uri, { params: { api_key: API_KEY, ...query } });
+  const { data: response } = await axios.get(BASE_URL + uri, { params: { api_key: API_KEY, ...query } });
+  return response;
 }
 const post = async (uri, body) => {
   return await axios.post(BASE_URL + uri, body, { params: { api_key: API_KEY } });
@@ -14,7 +15,7 @@ const post = async (uri, body) => {
  * @param {Object} res - response object
  */
 
-exports.availablePairs = async () => {
+exports.availableCurrenciesWithXMR = async () => {
   return await get('pairs/xmr');
 }
 

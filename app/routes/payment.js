@@ -34,5 +34,9 @@ router.post(
   controller.withdraw
 )
 
+router.get(
+  '/currencies',
+  controller.listCurrencies
+)
 
 module.exports = router

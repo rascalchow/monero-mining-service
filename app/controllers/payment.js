@@ -6,7 +6,7 @@ const PublisherReward = require('../models/publisherReward')
 const PublisherWithdraw = require('../models/publisherWithdraw')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
-const { transfer } = require('../services/stealthexApi')
+const { transfer, availableCurrenciesWithXMR } = require('../services/stealthexApi')
 const { STEALTHEX: { MONERO_REV_RATE } } = require('../consts');
 
 /********************
@@ -125,6 +125,18 @@ exports.withdraw = async (req, res) => {
     // 4. Transfer funds to publisher's Stealthex account
     await transfer(req.payoutAddress, publisher.payoutCurrency, balance);
     utils.handleSuccess(res, 201, {})
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+}
+
+exports.listCurrencies = async (req, res) => {
+  req = matchedData(req)
+
+  try {
+    const currencies = await availableCurrenciesWithXMR();
+    console.log({ currencies })
+    utils.handleSuccess(res, 201, currencies)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
