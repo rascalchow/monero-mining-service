@@ -6,7 +6,7 @@ const PublisherReward = require('../models/publisherReward')
 const PublisherWithdraw = require('../models/publisherWithdraw')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
-const { transfer, availableCurrenciesWithXMR } = require('../services/stealthexApi')
+const { transfer, availableCurrenciesWithXMR, estimateExchange } = require('../services/stealthexApi')
 const { STEALTHEX: { MONERO_REV_RATE } } = require('../consts');
 
 /********************
@@ -47,7 +47,6 @@ exports.onBlockReward = async (req, res) => {
         createdAt: -1
       }
     });
-    console.log({ lastReward });
     const lastRewardTime = lastReward ? lastReward.createdAt : new Date(0);
 
     // 1. Insert to RewardBlock table
@@ -73,8 +72,6 @@ exports.onBlockReward = async (req, res) => {
       totalLiveTime += points;
     })
 
-    console.log({ publishers: publishersLiveTime })
-    console.log({ sessions: availableSessions })
 
     // 3. Insert Publisher Reward record
     // 4. Update publisher balance
@@ -117,7 +114,7 @@ exports.withdraw = async (req, res) => {
 
   try {
     // 1. Get the balance
-    const publisher = await User.findById(req.user._id);
+    const publisher = req.user;
     const balance = (await PublisherBalance.findOne({ publisherId: publisher._id }))?.balance || 0;
     if (balance == 0) throw "No balance to withdraw";
 
@@ -138,9 +135,22 @@ exports.listCurrencies = async (req, res) => {
 
   try {
     const currencies = await availableCurrenciesWithXMR();
-    console.log({ currencies })
     utils.handleSuccess(res, 201, currencies)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
+}
+
+exports.estimateExchange = async (req, res) => {
+  req = matchedData(req)
+
+  try {
+    const publisher = req.user;
+    const balance = (await PublisherBalance.findOne({ publisherId: publisher._id }))?.balance || 0;
+    const amount = await estimateExchange('xmr', publisher.payoutCurrency, balance);
+    utils.handleSuccess(res, 201, amount)
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
+
 }

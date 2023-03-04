@@ -8,7 +8,7 @@ const db = require('../middleware/db')
 const PublisherBalance = require('../models/publisherBalance')
 const PublisherReward = require('../models/publisherReward')
 const PublisherWithdraw = require('../models/publisherWithdraw')
-
+const { estimateExchange } = require('../services/stealthexApi')
 const USER_KEY_LENGTH = 8
 /*********************
  * Private functions *
@@ -196,6 +196,7 @@ exports.getAppStats = async (req, res) => {
       }
     }]))?.total || 0;
     const balance = (await PublisherBalance.findOne({ publisherId: req.user._id }))?.balance || 0;
+    const withdrawBalance = await estimateExchange('xmr', req.user.payoutCurrency, balance);
     const lastPayment = (await PublisherWithdraw.findOne({ publisherId: req.user._id }, null, { sort: { createdAt: -1 } }))?.amount || 0;
 
     res.status(200).json({
@@ -210,6 +211,7 @@ exports.getAppStats = async (req, res) => {
       devices,
       lastPayment,
       balance,
+      withdrawBalance,
     })
   } catch (error) {
     utils.handleErrorV2(res, error)

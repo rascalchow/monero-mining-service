@@ -26,10 +26,14 @@ exports.transfer = async (address, currency, amount) => {
     address_to: address,
     amount_from: amount,
   });
-  console.log({ exchange })
   if (amount != exchange.expected_amount) {
     throw "Something went wrong!"
   }
   // transfer from process.env.MONERO_MINER_WALLET to exchange.address_from
   // Should be discussed
+}
+
+exports.estimateExchange = async (from, to, amount) => {
+  const response = await get(`estimate/${from}/${to}`, { amount });
+  return response?.estimated_amount || 0;
 }

@@ -39,4 +39,12 @@ router.get(
   controller.listCurrencies
 )
 
+router.get(
+  '/estimate_exchange',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  trimRequest.all,
+  controller.estimateExchange,
+)
+
 module.exports = router
