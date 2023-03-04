@@ -22,8 +22,7 @@ const PublisherRewardSchema = new mongoose.Schema(
       required: true,
     },
     referralId: {
-      type: Number,
-      required: true,
+      type: mongoose.Schema.ObjectId,
     },
   },
   {

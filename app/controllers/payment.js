@@ -14,18 +14,18 @@ const { STEALTHEX: { MONERO_REV_RATE } } = require('../consts');
  ********************/
 
 const rewardPublisher = async (publisherId, amount, rewardBlockId, reason, referralId) => {
-  await PublisherBalance.update({
+  await PublisherBalance.updateMany({
     publisherId,
   }, {
     $inc: { balance: amount }
   });
-  await new PublisherReward({
+  await PublisherReward.create({
     publisherId,
     amount,
     rewardBlockId,
     reason,
     referralId,
-  }).save()
+  })
 }
 
 /********************
@@ -53,13 +53,11 @@ exports.onBlockReward = async (req, res) => {
     // 1. Insert to RewardBlock table
     const reward = await RewardBlock.create({ value: req.monero });
     const publisherRewardInRev = reward.value * MONERO_REV_RATE * 0.75;
-    const masterRewardInRev = reward.value * MONERO_REV_RATE * 0.25;
+    let masterRewardInRev = reward.value * MONERO_REV_RATE * 0.25;
 
     // 2. Calculate publishers rewards
+
     const master = await User.findOne({ isPrimary: true });
-    rewardPublisher(master._id, masterRewardInRev, reward._id, 'master', null);
-
-
     const availableSessions = await AppUserSession.find({
       $or: [
         { endAt: { $gte: lastRewardTime } },
@@ -80,23 +78,28 @@ exports.onBlockReward = async (req, res) => {
 
     // 3. Insert Publisher Reward record
     // 4. Update publisher balance
-    const rewardPromises = [];
-
-    for (pubId in publishersLiveTime) {
-      const amount = publisherRewardInRev * publishersLiveTime[pubId] / totalLiveTime;
-      const publisherReward = amount;
-      const pub = await User.findById(pubId);
-      if (pub.refUser1Id) {
-        rewardPromises.push(rewardPublisher(pub.refUser1Id, amount * 0.05, reward._id, 'livetime', null));
-        publisherReward -= amount * 0.05;
+    if (totalLiveTime == 0) { // Just in case new block is mined without app running
+      masterRewardInRev = reward.value * MONERO_REV_RATE;
+    } else {
+      const rewardPromises = [];
+      for (pubId in publishersLiveTime) {
+        let amount = publisherRewardInRev * publishersLiveTime[pubId] / totalLiveTime;
+        rewardPromises.push(rewardPublisher(pubId, amount, reward._id, 'livetime', null));
+        const pub = await User.findById(pubId);
+        if (pub.refUser1Id) {
+          rewardPromises.push(rewardPublisher(pub.refUser1Id, amount * 0.05, reward._id, 'affiliate', pubId));
+          masterRewardInRev -= amount * 0.05;
+        }
+        if (pub.refUser2Id) {
+          rewardPromises.push(rewardPublisher(pub.refUser2Id, amount * 0.025, reward._id, 'affiliate', pubId));
+          masterRewardInRev -= amount * 0.025;
+        }
       }
-      if (pub.refUser2Id) {
-        rewardPromises.push(rewardPublisher(pub.refUser2Id, amount * 0.025, reward._id, 'livetime', null));
-        publisherReward -= amount * 0.025;
-      }
-      rewardPromises.push(rewardPublisher(pubId, publisherReward, reward._id, 'livetime', null));
+      await Promise.all(rewardPromises);
     }
-    await Promise.all(rewardPromises);
+
+    rewardPublisher(master._id, masterRewardInRev, reward._id, 'master', null);
+
 
     utils.handleSuccess(res, 201, {})
   } catch (error) {
@@ -115,11 +118,11 @@ exports.withdraw = async (req, res) => {
   try {
     // 1. Get the balance
     const publisher = await User.findById(req.user._id);
-    const balance = (await PublisherBalance.find({ publisherId: publisher._id }))?.balance || 0;
+    const balance = (await PublisherBalance.findOne({ publisherId: publisher._id }))?.balance || 0;
     if (balance == 0) throw "No balance to withdraw";
 
     // 2. Update publisher balance
-    await PublisherBalance.findAndUpdate({ publisherId: publisher._id }, { balance: 0 });
+    await PublisherBalance.updateMany({ publisherId: publisher._id }, { balance: 0 });
     // 3. Insert publisher record
     await PublisherWithdraw.create({ publisherId: publisher._id, balance });
     // 4. Transfer funds to publisher's Stealthex account
