@@ -8,6 +8,7 @@ const Invite = require('../models/invite')
 const UserEula = require('../models/userEula')
 const AppConfig = require('../models/appConfig')
 const ForgotPassword = require('../models/forgotPassword')
+const PublisherBalance = require('../models/publisherBalance')
 const utils = require('../middleware/utils')
 const uuid = require('uuid')
 const { addHours } = require('date-fns')
@@ -72,7 +73,7 @@ const generatePubliserKey = async () => {
  * Creates an object with user info
  * @param {Object} req - request object
  */
-const setUserInfo = req => {
+const setUserInfo = (req) => {
   let user = {
     _id: req._id,
     name: req.name,
@@ -88,7 +89,8 @@ const setUserInfo = req => {
     role: req.role,
     publisherKey: req.publisherKey,
     status: req.status,
-    verified: req.verified
+    verified: req.verified,
+    payoutCurrency: req.payoutCurrency || 'xmr',
   }
   // Adds verification for testing purposes
   if (process.env.NODE_ENV !== 'production') {
@@ -216,7 +218,7 @@ const findUser = async email => {
       {
         email
       },
-      'status loginAttempts blockExpires name email role verified publisherKey verification',
+      'status loginAttempts blockExpires name email role verified publisherKey verification payoutCurrency isPrimary',
       (err, item) => {
         utils.itemNotFound(err, item, reject, 'USER_DOES_NOT_EXIST')
         resolve(item)

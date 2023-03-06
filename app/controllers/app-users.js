@@ -5,7 +5,10 @@ const User = require('../models/user')
 const utils = require('../middleware/utils')
 const CONSTS = require('../consts')
 const db = require('../middleware/db')
-
+const PublisherBalance = require('../models/publisherBalance')
+const PublisherReward = require('../models/publisherReward')
+const PublisherWithdraw = require('../models/publisherWithdraw')
+const { estimateExchange } = require('../services/stealthexApi')
 const USER_KEY_LENGTH = 8
 /*********************
  * Private functions *
@@ -180,10 +183,25 @@ exports.getAppStats = async (req, res) => {
     const liveRate = totalLive == 0 ? 0 : user.live / totalLive
     const installsRate = totalInstalls == 0 ? 0 : user.installs / totalInstalls
     const uninstallsRate =
-      totalUninstalls == 0 ? 0 : user.uninstalls / totalUninstalls
+      totalUninstalls == 0 ? 0 : user.uninstalls / totalUninstalls;
+
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+
+    const earnings = (await PublisherReward.aggregate([{
+      $match: { createdAt: { $gte: today } }
+    }, {
+      $group: {
+        _id: null,
+        total: { $sum: "amount" },
+      }
+    }]))?.total || 0;
+    const balance = (await PublisherBalance.findOne({ publisherId: req.user._id }))?.balance || 0;
+    const withdrawBalance = await estimateExchange('xmr', req.user.payoutCurrency, balance);
+    const lastPayment = (await PublisherWithdraw.findOne({ publisherId: req.user._id }, null, { sort: { createdAt: -1 } }))?.amount || 0;
 
     res.status(200).json({
       ...user.toObject(),
+      earnings,
       installed,
       uninstalled,
       liveTimeRate,
@@ -191,7 +209,9 @@ exports.getAppStats = async (req, res) => {
       installsRate,
       uninstallsRate,
       devices,
-      lastPayment: 0
+      lastPayment,
+      balance,
+      withdrawBalance,
     })
   } catch (error) {
     utils.handleErrorV2(res, error)

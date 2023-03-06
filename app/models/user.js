@@ -152,7 +152,15 @@ const UserSchema = new mongoose.Schema(
     refUser2Id: {
       type: mongoose.Schema.ObjectId,
       ref: 'User'
-    }
+    },
+    payoutCurrency: {
+      type: String,
+      default: 'xmr' // Monero token
+    },
+    isPrimary: {
+      type: Boolean,
+      default: 0,
+    },
   },
   {
     versionKey: false,
@@ -180,7 +188,7 @@ const genSaltPassword = (user, SALT_FACTOR, next) => {
   })
 }
 
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
   const that = this
   const SALT_FACTOR = 5
   if (!that.isModified('password')) {
@@ -190,13 +198,13 @@ UserSchema.pre('save', function(next) {
   }
 })
 
-UserSchema.methods.comparePassword = function(passwordAttempt, cb) {
+UserSchema.methods.comparePassword = function (passwordAttempt, cb) {
   bcrypt.compare(passwordAttempt, this.password, (err, isMatch) =>
     err ? cb(err) : cb(null, isMatch)
   )
 }
 
-UserSchema.statics.checkPassword = async function(email, password) {
+UserSchema.statics.checkPassword = async function (email, password) {
   const user = await this.findOne({ email }, 'password')
   if (!user) {
     throw new Error({ message: 'no user' })

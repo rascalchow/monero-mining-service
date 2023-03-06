@@ -198,7 +198,7 @@ exports.deleteItem = async (req, res) => {
     // })
     // await model.updateMany({ refUser1Id: id }, { refUser1Id: null })
     // await model.updateMany({ refUser2Id: id }, { refUser2Id: null })
-    
+
     res.status(200).json(await db.deleteItem(id, model))
   } catch (error) {
     utils.handleError(res, error)
@@ -225,6 +225,17 @@ exports.rejectUser = async (req, res) => {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
     res.status(200).json(await db.updateItem(id, model, { status: 'rejected' }))
+  } catch (error) {
+    utils.handleError(res, error)
+  }
+}
+
+exports.setPrimaryUser = async (req, res) => {
+  try {
+    req = matchedData(req)
+    const id = await utils.isIDGood(req.id)
+    await model.updateMany({}, { isPrimary: false })
+    res.status(200).json(await db.updateItem(id, model, { isPrimary: true }))
   } catch (error) {
     utils.handleError(res, error)
   }

@@ -109,4 +109,14 @@ router.post(
   controller.rejectUser
 )
 
+router.post(
+  '/:id/setPrimary',
+  requireAuth,
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  trimRequest.all,
+  validate.setPrimaryUser,
+  controller.setPrimaryUser
+)
+
 module.exports = router
