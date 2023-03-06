@@ -218,7 +218,7 @@ const findUser = async email => {
       {
         email
       },
-      'status loginAttempts blockExpires name email role verified publisherKey verification',
+      'status loginAttempts blockExpires name email role verified publisherKey verification payoutCurrency isPrimary',
       (err, item) => {
         utils.itemNotFound(err, item, reject, 'USER_DOES_NOT_EXIST')
         resolve(item)
