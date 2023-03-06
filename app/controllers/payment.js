@@ -14,11 +14,11 @@ const { STEALTHEX: { MONERO_REV_RATE } } = require('../consts');
  ********************/
 
 const rewardPublisher = async (publisherId, amount, rewardBlockId, reason, referralId) => {
-  await PublisherBalance.updateMany({
+  await PublisherBalance.updateOne({
     publisherId,
   }, {
     $inc: { balance: amount }
-  });
+  }, { upsert: true });
   await PublisherReward.create({
     publisherId,
     amount,
