@@ -21,6 +21,7 @@ const CONSTS = require('../consts')
 router.get(
   '/',
   requireAuth,
+  AuthController.requireNotDisabled,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   controller.getProfile
@@ -32,10 +33,22 @@ router.get(
 router.patch(
   '/',
   requireAuth,
+  AuthController.requireNotDisabled,
+  AuthController.requireNotPending,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   validate.updateProfile,
   controller.updateProfile
+)
+
+router.patch(
+  '/payoutCurrency',
+  requireAuth,
+  AuthController.requireNotDisabled,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  trimRequest.all,
+  validate.updateCurrency,
+  controller.updateCurrency,
 )
 
 module.exports = router

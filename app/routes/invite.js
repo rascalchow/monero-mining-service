@@ -17,6 +17,7 @@ const CONSTS = require('../consts')
 router.get(
   '/',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   controller.get
@@ -28,6 +29,7 @@ router.get(
 router.post(
   '/',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   controller.create
@@ -39,6 +41,7 @@ router.post(
 router.delete(
   '/:id',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   controller.remove
@@ -66,6 +69,7 @@ router.get(
 router.get(
   '/publisher/referrals',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   controller.getPublisherReferrals

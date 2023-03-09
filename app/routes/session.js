@@ -39,6 +39,7 @@ router.get(
   '/publisher/livetime',
   requireAuth,
   trimRequest.all,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   controller.getPublisherLiveTimeStat
 )
