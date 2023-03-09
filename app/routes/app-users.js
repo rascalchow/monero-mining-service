@@ -25,6 +25,7 @@ router.get(
   '/:id',
   requireAuth,
   trimRequest.all,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   controller.getAppUsers
 )
@@ -58,6 +59,7 @@ router.get(
   '/user/stats',
   requireAuth,
   trimRequest.all,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   controller.getAppStats
 )
@@ -68,6 +70,7 @@ router.get(
   '/publisher/install',
   requireAuth,
   trimRequest.all,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   controller.getPublisherInstallStats
 )
@@ -79,6 +82,7 @@ router.get(
   '/installed/:id',
   requireAuth,
   trimRequest.all,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   controller.getInstalledUsers
 )

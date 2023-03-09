@@ -51,6 +51,7 @@ router.post(
 router.get(
   '/token',
   requireAuth,
+  AuthController.requireNotDisabled,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   controller.getRefreshToken
@@ -67,6 +68,7 @@ router.post('/login', trimRequest.all, validate.login, controller.login)
 router.patch(
   '/change-password',
   requireAuth,
+  AuthController.requireNotDisabled,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   validate.changePassword,
@@ -79,6 +81,8 @@ router.patch(
 router.patch(
   '/profile',
   requireAuth,
+  AuthController.requireNotDisabled,
+  AuthController.requireNotPending,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   controller.updateProfile

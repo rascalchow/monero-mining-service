@@ -21,6 +21,7 @@ const CONSTS = require('../consts')
 router.get(
   '/',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   controller.get
@@ -32,6 +33,7 @@ router.get(
 router.post(
   '/',
   requireAuth,
+  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLES),
   trimRequest.all,
   validate.update,
