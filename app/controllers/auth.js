@@ -566,28 +566,6 @@ const checkUserIsApproved = user => {
   }
   throw utils.buildErrObject(401, 'USER_IS_NOT_APPROVED')
 }
-
-/**
- * Check is user is approved
- * @param {Object} user - user model instance
- */
-const checkUserIsNotPending = user => {
-  if (user.status === 'pending') {
-    throw utils.buildErrObject(401, 'USER_IS_NOT_APPROVED')
-  }
-  return true
-}
-
-/**
- * Check is user is approved
- * @param {Object} user - user model instance
- */
-const checkUserIsNotInActive = user => {
-  if (user.status === 'inactive') {
-    throw utils.buildErrObject(401, 'USER_IS_INACTIVE')
-  }
-  return true
-}
 /********************
  * Public functions *
  ********************/
@@ -601,7 +579,7 @@ exports.login = async (req, res) => {
   try {
     const data = matchedData(req)
     const user = await findUser(data.email)
-    checkUserIsNotInActive(user)
+    checkUserIsApproved(user)
     await userIsBlocked(user)
     await checkLoginAttemptsAndBlockExpires(user)
     const isPasswordMatch = await auth.checkPassword(data.email, data.password)
@@ -749,24 +727,6 @@ exports.roleAuthorization = roles => async (req, res, next) => {
 exports.requireApproval = (req, res, next) => {
   try {
     checkUserIsApproved(req.user)
-    next()
-  } catch (error) {
-    utils.handleError(res, error)
-  }
-}
-
-exports.requireNotDisabled = (req, res, next) => {
-  try {
-    checkUserIsNotInActive(req.user)
-    next()
-  } catch (error) {
-    utils.handleError(res, error)
-  }
-}
-
-exports.requireNotPending = (req, res, next) => {
-  try {
-    checkUserIsNotPending(req.user)
     next()
   } catch (error) {
     utils.handleError(res, error)

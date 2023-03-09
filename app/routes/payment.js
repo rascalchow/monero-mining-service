@@ -28,7 +28,6 @@ router.post(
 router.post(
   '/withdraw',
   requireAuth,
-  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   validate.withdraw,
@@ -43,7 +42,6 @@ router.get(
 router.get(
   '/estimate_exchange',
   requireAuth,
-  AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   controller.estimateExchange,

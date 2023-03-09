@@ -23,16 +23,3 @@ exports.updateProfile = [
     validationResult(req, res, next)
   }
 ]
-
-exports.updateCurrency = [
-  check('currency')
-    .exists()
-    .withMessage('MISSING')
-    .not()
-    .isEmpty()
-    .withMessage('IS_EMPTY'),
-
-  (req, res, next) => {
-    validationResult(req, res, next)
-  }
-]

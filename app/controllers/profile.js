@@ -1,10 +1,9 @@
-model = require('../models/user')
+const model = require('../models/user')
 const utils = require('../middleware/utils')
 const { matchedData } = require('express-validator')
 const auth = require('../middleware/auth')
 const db = require('../middleware/db')
 const { populate } = require('../models/user')
-const CONSTS = require('../consts')
 
 /*********************
  * Private functions *
@@ -41,7 +40,7 @@ const updateProfileInDB = async (req, id) => {
       {
         new: true,
         runValidators: true,
-        select: '-updatedAt -createdAt'
+        select: '-role -updatedAt -createdAt'
       },
       (err, user) => {
         utils.itemNotFound(err, user, reject, 'NOT_FOUND')
@@ -127,23 +126,6 @@ exports.updateProfile = async (req, res) => {
     req = matchedData(req)
 
     res.status(200).json(await updateProfileInDB(req, id))
-  } catch (error) {
-    utils.handleError(res, error)
-  }
-}
-
-/**
- * Update item function called by route
- * @param {Object} req - request object
- * @param {Object} res - response object
- */
-exports.updateCurrency = async (req, res) => {
-  try {
-    const id = req.user._id
-    req = matchedData(req)
-    let user = await db.updateItem(id, model, { status: CONSTS.USER.STATUS.PENDING, payoutCurrency: req.currency })
-    await user.save()
-    res.status(200).json(await getProfileFromDB(id))
   } catch (error) {
     utils.handleError(res, error)
   }
