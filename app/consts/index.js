@@ -62,4 +62,12 @@ module.exports = {
     BASE_URL: 'https://api.stealthex.io/api/v2/',
     MONERO_REV_RATE: 1000,
   },
+  WITHDRAW: {
+    STATUSES: ['initiating', 'failed', 'tranferring', 'block confirming', 'converting currency', 'completed'],
+    STATUS: {
+      INITIATED: 'initiated',
+    },
+    SORT_KEY: ['refereeEmail', 'code', 'status', 'acceptedAt', 'createdAt'],
+    REFERRALS_SORT_KEY: ['status', 'companyName', 'referrals']
+  },
 }
