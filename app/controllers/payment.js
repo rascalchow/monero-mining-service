@@ -6,9 +6,8 @@ const PublisherReward = require('../models/publisherReward')
 const PublisherWithdraw = require('../models/publisherWithdraw')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
-const { transfer, availableCurrenciesWithXMR, estimateExchange } = require('../services/stealthexApi')
+const { transfer, availableCurrenciesWithXMR, estimateExchange, moneroTransfer } = require('../services/stealthexApi')
 const { STEALTHEX: { MONERO_REV_RATE } } = require('../consts');
-
 /********************
  * Private functions *
  ********************/
@@ -38,6 +37,10 @@ const rewardPublisher = async (publisherId, amount, rewardBlockId, reason, refer
  * @param {Object} res - response object
  */
 exports.onBlockReward = async (req, res) => {
+
+  const result = await moneroTransfer("", 1);
+  res.status(200).json(result);
+  return;
   req = matchedData(req)
 
   try {

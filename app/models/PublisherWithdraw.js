@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const mongoosePaginate = require('mongoose-paginate-v2')
+const CONSTS = require('../consts')
 
 const PublisherWithdrawSchema = new mongoose.Schema(
   {
@@ -11,6 +12,11 @@ const PublisherWithdrawSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    status: {
+      type: String,
+      enum: CONSTS.WITHDRAW.STATUSES,
+      default: CONSTS.WITHDRAW.STATUS.INITIATED
+    }
   },
   {
     versionKey: false,
