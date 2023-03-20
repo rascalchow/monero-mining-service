@@ -6,10 +6,8 @@ const PublisherReward = require('../models/publisherReward')
 const PublisherWithdraw = require('../models/publisherWithdraw')
 const { matchedData } = require('express-validator')
 const utils = require('../middleware/utils')
-const { transfer, availableCurrenciesWithXMR, estimateExchange } = require('../services/stealthexApi')
+const { transfer, availableCurrenciesWithXMR, estimateExchange, moneroTransfer } = require('../services/stealthexApi')
 const { STEALTHEX: { MONERO_REV_RATE } } = require('../consts');
-const monerojs = require("monero-javascript");
-const { MoneroNetworkType } = monerojs;
 /********************
  * Private functions *
  ********************/
@@ -38,35 +36,11 @@ const rewardPublisher = async (publisherId, amount, rewardBlockId, reason, refer
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
-// 47pD7i1m8YW53KkTJ8XEAf3Zk3c9hfe3S9CS4zG596eBNLHzQHN5AkdZ6rhH6MJjU6Ck5sXRq7v1T7UWZsuYRmtA1A2owBw
-// BceiPLaX7YDevCfKvgXFq8Tk1BGkQvtfAWCWJGgZfb6kBju1rDUCPzfDbHmffHMC5AZ6TxbgVVkyDFAnD2AVzLNp37DFz32
 exports.onBlockReward = async (req, res) => {
-  let walletRpc = await monerojs.connectToWalletRpc("http://localhost:28084", "rpc", "euphoria");
-  try {
-    await walletRpc.openWallet("nurev2", "password");
-  } catch (e) {
-    res.status(200).send('fail')
-  }
-  let primaryAddress = await walletRpc.getPrimaryAddress(); // 555zgduFhmKd2o8rPUz...
-  let mnemonic = await walletRpc.getMnemonic(); // 555zgduFhmKd2o8rPUz...
-  let balance = await walletRpc.getBalance();               // 533648366742
-  let txs = await walletRpc.getTxs();
 
-  let createdTx = await walletRpc.createTx({
-    accountIndex: 0,
-    address: receipant
-    amount: new monerojs.BigInteger("5000000"), // amount to transfer in atomic units
-    relay: false // create transaction and relay to the network if true
-  });
-  let fee = createdTx.getFee(); // "Are you sure you want to send... ?"
-  await walletRpc.relayTx(createdTx); // relay the transaction
-
-
-  utils.handleSuccess(res, 201, { primaryAddress, mnemonic, balance })
-
-  await walletRpc.close();
+  const result = await moneroTransfer("", 1);
+  res.status(200).json(result);
   return;
-
   req = matchedData(req)
 
   try {
