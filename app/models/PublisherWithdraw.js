@@ -6,16 +6,20 @@ const PublisherWithdrawSchema = new mongoose.Schema(
   {
     publisherId: {
       type: mongoose.Schema.ObjectId,
-      required: true,
+      required: true
     },
     amount: {
       type: Number,
-      required: true,
+      required: true
     },
     status: {
       type: String,
       enum: CONSTS.WITHDRAW.STATUSES,
       default: CONSTS.WITHDRAW.STATUS.INITIATED
+    },
+    txHash: {
+      type: String,
+      required: true
     }
   },
   {

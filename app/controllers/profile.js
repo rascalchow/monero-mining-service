@@ -1,4 +1,4 @@
-model = require('../models/user')
+const model = require('../models/user')
 const utils = require('../middleware/utils')
 const { matchedData } = require('express-validator')
 const auth = require('../middleware/auth')
@@ -141,7 +141,10 @@ exports.updateCurrency = async (req, res) => {
   try {
     const id = req.user._id
     req = matchedData(req)
-    let user = await db.updateItem(id, model, { status: CONSTS.USER.STATUS.PENDING, payoutCurrency: req.currency })
+    const user = await db.updateItem(id, model, {
+      status: CONSTS.USER.STATUS.PENDING,
+      payoutCurrency: req.currency
+    })
     await user.save()
     res.status(200).json(await getProfileFromDB(id))
   } catch (error) {

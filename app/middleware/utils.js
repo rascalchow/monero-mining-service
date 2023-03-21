@@ -226,10 +226,10 @@ exports.onSessionEnded = async sess => {
         $inc: { liveTime: sess.duration, live: -1 } //
       })
       const totalLiveTime = (await User.findById(publisherId)).liveTime
-      let appUsers = await AppUser.find({ liveTime: { $gt: 0 }, publisherId })
+      const appUsers = await AppUser.find({ liveTime: { $gt: 0 }, publisherId })
       appUsers.forEach(async appUser => {
         appUser.timeRatio =
-          totalLiveTime == 0
+          totalLiveTime === 0
             ? 0
             : ((appUser.liveTime * 100) / totalLiveTime).toFixed(2)
         await appUser.save()

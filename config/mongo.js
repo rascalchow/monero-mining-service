@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const DB_URL = process.env.MONGO_URI
 const loadModels = require('../app/models')
 
-module.exports = (callback) => {
+module.exports = callback => {
   const connect = () => {
     mongoose.Promise = global.Promise
 
@@ -30,7 +30,7 @@ module.exports = (callback) => {
           console.log(dbStatus)
         }
 
-        callback(err);
+        callback(err)
       }
     )
     mongoose.set('useCreateIndex', true)

@@ -16,7 +16,7 @@ module.exports = {
       script: './server.js', // cluster mode run with node only, not npm
       args: '',
       exec_mode: 'cluster', // default fork
-      instances: 2, //"max",
+      instances: 2, // "max",
       kill_timeout: 4000,
       wait_ready: true,
       autorestart: true,
@@ -25,7 +25,6 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         NODE_ENV: 'production',
-        PORT: '3000',
         JWT_SECRET: '#@(FWeiooijweoi234)',
         JWT_EXPIRATION_IN_MINUTES: '4320000',
         MONGO_URI:

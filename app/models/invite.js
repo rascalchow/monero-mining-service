@@ -15,7 +15,7 @@ const InviteSchema = new mongoose.Schema(
     },
     expired: {
       type: Boolean,
-      default:false
+      default: false
     },
     code: {
       type: String

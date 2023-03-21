@@ -52,12 +52,6 @@ const AppUserSchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
-    device: {
-      type: String
-    },
-    operatingSystem: {
-      type: String
-    },
     publisherId: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',

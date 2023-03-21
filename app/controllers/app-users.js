@@ -24,7 +24,7 @@ const generateUserrKey = async () => {
     key += alphaNumerics.charAt(Math.floor(Math.random() * 36))
   }
   while ((await AppUser.find({ userKey: key }).length) > 0) {
-    let key = ''
+    key = ''
     for (let i = 0; i < USER_KEY_LENGTH; i++) {
       key += alphaNumerics.charAt(Math.floor(Math.random() * 36))
     }
@@ -179,25 +179,43 @@ exports.getAppStats = async (req, res) => {
       totalUninstalls
     } = totalCount[0]
     const user = await db.getItem(req.user._id, User)
-    const liveTimeRate = totalLiveTime == 0 ? 0 : user.liveTime / totalLiveTime
-    const liveRate = totalLive == 0 ? 0 : user.live / totalLive
-    const installsRate = totalInstalls == 0 ? 0 : user.installs / totalInstalls
+    const liveTimeRate = totalLiveTime === 0 ? 0 : user.liveTime / totalLiveTime
+    const liveRate = totalLive === 0 ? 0 : user.live / totalLive
+    const installsRate = totalInstalls === 0 ? 0 : user.installs / totalInstalls
     const uninstallsRate =
-      totalUninstalls == 0 ? 0 : user.uninstalls / totalUninstalls;
+      totalUninstalls === 0 ? 0 : user.uninstalls / totalUninstalls
 
-    var today = new Date(); today.setHours(0, 0, 0, 0);
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
 
-    const earnings = (await PublisherReward.aggregate([{
-      $match: { createdAt: { $gte: today } }
-    }, {
-      $group: {
-        _id: null,
-        total: { $sum: "amount" },
-      }
-    }]))?.total || 0;
-    const balance = (await PublisherBalance.findOne({ publisherId: req.user._id }))?.balance || 0;
-    const withdrawBalance = await estimateExchange('xmr', req.user.payoutCurrency, balance);
-    const lastPayment = (await PublisherWithdraw.findOne({ publisherId: req.user._id }, null, { sort: { createdAt: -1 } }))?.amount || 0;
+    const earnings =
+      (
+        await PublisherReward.aggregate([
+          {
+            $match: { createdAt: { $gte: today } }
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: 'amount' }
+            }
+          }
+        ])
+      )?.total || 0
+    const balance =
+      (await PublisherBalance.findOne({ publisherId: req.user._id }))
+        ?.balance || 0
+    const withdrawBalance = await estimateExchange(
+      'xmr',
+      req.user.payoutCurrency,
+      balance
+    )
+    const lastPayment =
+      (
+        await PublisherWithdraw.findOne({ publisherId: req.user._id }, null, {
+          sort: { createdAt: -1 }
+        })
+      )?.amount || 0
 
     res.status(200).json({
       ...user.toObject(),
@@ -211,7 +229,7 @@ exports.getAppStats = async (req, res) => {
       devices,
       lastPayment,
       balance,
-      withdrawBalance,
+      withdrawBalance
     })
   } catch (error) {
     utils.handleErrorV2(res, error)
@@ -230,14 +248,14 @@ exports.getAppUsers = async (req, res) => {
   if (query.search) {
     const search = query.search
     delete query.search
-    if (role == 'admin') {
-      query['$or'] = [
+    if (role === 'admin') {
+      query.$or = [
         { device: { $regex: `.*${search}.*`, $options: 'i' } },
         { userKey: { $regex: `.*${search}.*`, $options: 'i' } },
         { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
       ]
     } else {
-      query['$or'] = [
+      query.$or = [
         { device: { $regex: `.*${search}.*`, $options: 'i' } },
         { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
       ]
@@ -250,7 +268,9 @@ exports.getAppUsers = async (req, res) => {
       sort = { [key]: query[key] }
       delete query[key]
     }
-    if (sort == null) sort = { createdAt: -1 }
+    if (sort === null) {
+      sort = { createdAt: -1 }
+    }
   })
   const processQuery = opt => {
     opt.collation = { locale: 'en' }
@@ -260,6 +280,33 @@ exports.getAppUsers = async (req, res) => {
   res.status(200).json(data)
 }
 
+const filterAppUserInfo = (installs, dates) => {
+  const DAY = 86400000
+  const duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
+  const now = new Date()
+  const result = []
+  for (let i = 0; i < duration; i++) {
+    let count = installs.filter(it => {
+      const current = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i
+      )
+      const { installedAt } = it
+      if (
+        installedAt.getFullYear() === current.getUTCFullYear() &&
+        installedAt.getMonth() === current.getUTCMonth() &&
+        installedAt.getDate() === current.getUTCDate()
+      ) {
+        return true
+      }
+      return false
+    }).length
+    result[i] = count
+    count = 0
+  }
+  return result
+}
 exports.getInstalledUsers = async (req, res) => {
   const { param, type } = req.query
   const { id } = req.params
@@ -283,32 +330,37 @@ exports.getInstalledUsers = async (req, res) => {
   }
 }
 
-const filterAppUserInfo = (installs, dates) => {
-  const DAY = 86400000
-  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
-  const now = new Date()
-  let result = []
-  for (let i = 0; i < duration; i++) {
-    let count = installs.filter(it => {
-      let current = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - i
-      )
-      const { installedAt } = it
-      if (
-        installedAt.getFullYear() == current.getUTCFullYear() &&
-        installedAt.getMonth() == current.getUTCMonth() &&
-        installedAt.getDate() == current.getUTCDate()
-      ) {
-        return true
-      }
-      return false
-    }).length
-    result[i] = count
-    count = 0
+const getLabel = (date, type) => {
+  const timeOpt = {
+    hour: 'numeric',
+    hour12: false
   }
-  return result
+  const dateOpt = {
+    month: 'numeric',
+    day: 'numeric'
+  }
+  if (type === 'day') {
+    return new Intl.DateTimeFormat('en-US', timeOpt).format(date)
+  } else if (type === 'month') {
+    return new Intl.DateTimeFormat('en-US', dateOpt).format(date)
+  }
+  return null
+}
+
+const filterPublisherInstalls = (installs, dates) => {
+  const DAY = 86400000
+  const duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
+  const result = {}
+  let max = 0
+  for (let i = 0; i < duration; i++) {
+    const current = new Date(new Date(dates[0]).valueOf() + i * DAY)
+    const count = installs.filter(
+      it => it.installedAt.toDateString() === current.toDateString()
+    ).length
+    result[getLabel(current, 'month')] = count
+    max = Math.max(max, count)
+  }
+  return { result, max }
 }
 
 /**
@@ -319,7 +371,6 @@ const filterAppUserInfo = (installs, dates) => {
 exports.getPublisherInstallStats = async (req, res) => {
   const param = req.query
   const id = req.user._id
-  const now = new Date()
   const query = {
     $exists: true,
     $gte: new Date(param[0]),
@@ -331,7 +382,10 @@ exports.getPublisherInstallStats = async (req, res) => {
       status: 'installed',
       installedAt: query
     })
-    const { result: processedResultForChart, max } = filterPublisherInstalls(chartRes, param)
+    const { result: processedResultForChart, max } = filterPublisherInstalls(
+      chartRes,
+      param
+    )
     const installsCount = chartRes.length
     const uninstallsCount = await AppUser.count({
       publisherId: id,
@@ -354,34 +408,3 @@ exports.getPublisherInstallStats = async (req, res) => {
     utils.handleErrorV2(res, error)
   }
 }
-
-const filterPublisherInstalls = (installs, dates) => {
-  const DAY = 86400000
-  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
-  const now = new Date()
-  let result = {}, max = 0;
-  for (let i = 0; i < duration; i++) {
-    let current = new Date(new Date(dates[0]).valueOf() + i * DAY);
-    let count = installs.filter(it => it.installedAt.toDateString() == current.toDateString()).length
-    result[getLabel(current, 'month')] = count
-    max = Math.max(max, count);
-  }
-  return { result, max }
-}
-
-const getLabel = (date, type) => {
-  const timeOpt = {
-    hour: 'numeric',
-    hour12: false
-  }
-  const dateOpt = {
-    month: 'numeric',
-    day: 'numeric'
-  }
-  if (type == 'day') {
-    return new Intl.DateTimeFormat('en-US', timeOpt).format(date)
-  } else if (type == 'month') {
-    return new Intl.DateTimeFormat('en-US', dateOpt).format(date)
-  }
-}
-

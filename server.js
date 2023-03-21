@@ -12,6 +12,7 @@ const passport = require('passport')
 const app = express()
 // const i18n = require('i18n')
 const initMongo = require('./config/mongo')
+const { initMonero } = require('./config/monero')
 const path = require('path')
 const { seedAdminUser } = require('./app/controllers/auth')
 const { seedAppConfig } = require('./app/controllers/settings')
@@ -44,7 +45,7 @@ if (process.env.USE_REDIS === 'true') {
 
 cron.schedule('*/15 * * * *', async () => {
   console.log('updating session every 15 mins')
-  //find all sessions lastSeen is older than 10 mins
+  // find all sessions lastSeen is older than 10 mins
   // and update duration
   const lastTime = moment()
     .subtract(15, 'minutes')
@@ -98,10 +99,12 @@ const server = require('http').createServer(app)
 server.listen(app.get('port'))
 
 // Init MongoDB
-initMongo(err => {
+initMongo(() => {
   // Setup)
   seedAdminUser()
   seedAppConfig()
 })
+
+initMonero()
 
 module.exports = app // for testing

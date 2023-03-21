@@ -20,7 +20,7 @@ const buildPopulate = populate => {
     return null
   }
 
-  if (populate.indexOf('{') == -1 && populate.indexOf('[') == -1) {
+  if (populate.indexOf('{') === -1 && populate.indexOf('[') === -1) {
     return populate
   }
 
@@ -28,9 +28,8 @@ const buildPopulate = populate => {
     const result = JSON.parse(populate)
     if (result) {
       return result
-    } else {
-      return populate
     }
+    return populate
   } catch (err) {
     console.log(err)
     // Do nothing
@@ -55,7 +54,7 @@ const listInitOptions = req => {
     const populate = buildPopulate(req.query.populate)
     let search = ''
     try {
-      search = JSON.parse(req.query.filter)['search']
+      search = JSON.parse(req.query.filter).search
     } catch (err) {
       console.log(err)
     }
@@ -93,13 +92,13 @@ module.exports = {
             return resolve({})
           }
           const filter = JSON.parse(query.filter)
-          resolve(filter)
-        } else {
-          resolve({})
+          return resolve(filter)
         }
+
+        return resolve({})
       } catch (err) {
         console.log(err.message)
-        reject(buildErrObject(422, 'ERROR_WITH_FILTER'))
+        return reject(buildErrObject(422, 'ERROR_WITH_FILTER'))
       }
     })
   },
@@ -129,13 +128,13 @@ module.exports = {
   async getItem(id, model, populate) {
     let item = null
     try {
-      let q = model.findById(id)
+      const q = model.findById(id)
       if (populate) {
         q.populate(populate)
       }
       item = await q.exec()
     } catch (error) {
-      throw buildErrObject(422, err.message)
+      throw buildErrObject(422, error.message)
     }
     if (item) {
       return item

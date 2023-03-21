@@ -15,7 +15,7 @@ exports.install = [
     .withMessage('PUBLISHER_KEY_IS_NOT_VALID'),
   check('version')
     .optional()
-    .matches('[0-9]+(\.[0-9]+)*')
+    .matches('[0-9]+(.[0-9]+)*')
     .withMessage('VERSION_NUMBER_IS_NOT_VALID'),
   (req, res, next) => {
     validationResult(req, res, next)

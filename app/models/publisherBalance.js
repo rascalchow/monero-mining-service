@@ -5,12 +5,13 @@ const PublisherBalanceSchema = new mongoose.Schema(
   {
     publisherId: {
       type: mongoose.Schema.ObjectId,
-      required: true,
+      required: true
     },
-    balance: { // newly added rev balance
+    balance: {
+      // newly added rev balance
       type: Number,
-      default: 0,
-    },
+      default: 0
+    }
   },
   {
     versionKey: false,

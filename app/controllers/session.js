@@ -11,6 +11,61 @@ const CONSTS = require('../consts')
  * Public functions *
  ********************/
 
+const getLabel = (date, type) => {
+  const timeOpt = {
+    hour: 'numeric',
+    hour12: false
+  }
+  const dateOpt = {
+    month: 'numeric',
+    day: 'numeric'
+  }
+  if (type === 'day') {
+    return new Intl.DateTimeFormat('en-US', timeOpt).format(date)
+  } else if (type === 'month') {
+    return new Intl.DateTimeFormat('en-US', dateOpt).format(date)
+  }
+  return ''
+}
+
+const filterLiveTimeInfo = (sessions, dates) => {
+  const DAY = 86400000
+  sessions.sort((a, b) => {
+    return b.duration - a.duration
+  })
+  const max = sessions[0]?.duration
+  let count = 0
+  sessions.forEach((install, index) => {
+    count += install.duration
+  })
+  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
+
+  const type = duration === 1 ? 'day' : 'month'
+  duration = duration === 1 ? 24 : duration
+
+  let toObject = {}
+  sessions.forEach((install, index) => {
+    const label = getLabel(install.endAt, type)
+    count = install.duration
+    toObject = {
+      ...toObject,
+      [label]: toObject[label] ? toObject[label] + count : count
+    }
+  })
+  let current = new Date(dates[0])
+  const data = {}
+  for (let i = 0; i < duration; i++) {
+    if (type === 'month') {
+      current = new Date(current.setDate(current.getDate() + 1))
+    } else if (type === 'day') {
+      current = new Date(current.setHours(current.getHours() + 1))
+    }
+    const label = getLabel(current, type)
+    data[label] = toObject[label] ? toObject[label] : 0
+  }
+  return { data, max, count }
+}
+
 /**
  * Post start running function called by route
  * @param {Object} req - request object
@@ -19,15 +74,15 @@ const CONSTS = require('../consts')
 exports.startRunning = async (req, res) => {
   try {
     req = matchedData(req)
-    let sessions = await AppUserSession.find({ userKey: req.userKey })
+    const sessions = await AppUserSession.find({ userKey: req.userKey })
     sessions.forEach(async it => {
-      if (it.endAt == null) {
+      if (it.endAt === null) {
         utils.onSessionEnded(it)
       }
     })
 
     const appUser = await AppUser.findOne({ userKey: req.userKey })
-    if (appUser.status == 'uninstalled') {
+    if (appUser.status === 'uninstalled') {
       throw utils.buildErrObject(400, 'DEVICE_ALREADY_UNINSTALLED')
     }
     req = {
@@ -35,7 +90,7 @@ exports.startRunning = async (req, res) => {
       userId: appUser._id,
       publisherId: appUser.publisherId
     }
-    let session = await AppUserSession.create(req)
+    const session = await AppUserSession.create(req)
     // increment live numbers to user
     try {
       await User.findByIdAndUpdate(
@@ -59,9 +114,9 @@ exports.startRunning = async (req, res) => {
  */
 exports.endRunning = async (req, res) => {
   try {
-    const sessionId = req.body['sessionId']
+    const sessionId = req.body.sessionId
     if (sessionId) {
-      let session = await AppUserSession.findById(sessionId)
+      const session = await AppUserSession.findById(sessionId)
       if (!session) {
         throw utils.buildErrObject(400, 'SESSION_ID_DOES_NOT_EXISTS')
       } else {
@@ -88,9 +143,9 @@ exports.endRunning = async (req, res) => {
  * @param {Object} res - response object
  */
 exports.runningNow = async (req, res) => {
-  const sessionId = req.body['sessionId']
+  const sessionId = req.body.sessionId
   if (sessionId) {
-    //update lastSeen
+    // update lastSeen
     try {
       const session = await AppUserSession.findById(sessionId)
       if (session.endAt) {
@@ -116,9 +171,9 @@ exports.getLiveTime = async (req, res) => {
   const { param, dataType } = req.query
   const { id } = req.params
   const now = new Date()
-  let yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  let lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
-  let allTime = new Date(now.getFullYear(), now.getMonth() - 3)
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
+  const allTime = new Date(now.getFullYear(), now.getMonth() - 3)
   const query = {
     $exists: true,
     $gte: new Date(param[0]),
@@ -165,9 +220,9 @@ exports.getPublisherLiveTimeStat = async (req, res) => {
   const { param } = req.query
   const id = req.user._id
   const now = new Date()
-  let yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  let lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
-  let allTime = new Date(now.getFullYear(), now.getMonth() - 3)
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
+  const allTime = new Date(now.getFullYear(), now.getMonth() - 3)
   const query = {
     $exists: true,
     $gte: new Date(param[0]),
@@ -219,37 +274,38 @@ exports.getPublisherLiveTimeStat = async (req, res) => {
     ])
     const totalActiveUsers = activeSessionUserIds.length
     const current = (await User.findById(id)).live
-    
+
     const todayBegin = new Date(new Date().toDateString())
-    const todaySessions = await AppUserSession.find(
-      {
-          publisherId: id,
-          $or: [
-            {
-              endAt: {
-                $exists: true,
-                $gte: todayBegin,
-              }
-            },
-            {
-              endAt: {
-                $exists: false
-              }
-            }
-          ]
-      })
+    const todaySessions = await AppUserSession.find({
+      publisherId: id,
+      $or: [
+        {
+          endAt: {
+            $exists: true,
+            $gte: todayBegin
+          }
+        },
+        {
+          endAt: {
+            $exists: false
+          }
+        }
+      ]
+    })
 
     const liveTimeSum = todaySessions.reduce((sum, cur) => {
-      let start = Math.max(cur.startAt.valueOf(), todayBegin.valueOf());
-      if (cur.endAt) return sum + (cur.endAt.valueOf() - start) / 1000;
-      else return sum + (Date.now() - start) / 1000;
+      const start = Math.max(cur.startAt.valueOf(), todayBegin.valueOf())
+      if (cur.endAt) {
+        return sum + (cur.endAt.valueOf() - start) / 1000
+      }
+      return sum + (Date.now() - start) / 1000
     }, 0)
 
     const appUserQuery = await db.checkQueryString(req.query)
     if (appUserQuery.search) {
       const search = appUserQuery.search
       delete appUserQuery.search
-      appUserQuery['$or'] = [
+      appUserQuery.$or = [
         { device: { $regex: `.*${search}.*`, $options: 'i' } },
         { userKey: { $regex: `.*${search}.*`, $options: 'i' } },
         { operatingSystem: { $regex: `.*${search}.*`, $options: 'i' } }
@@ -262,7 +318,9 @@ exports.getPublisherLiveTimeStat = async (req, res) => {
         sort = { [key]: appUserQuery[key] }
         delete appUserQuery[key]
       }
-      if (sort == null) sort = { createdAt: -1 }
+      if (sort === null) {
+        sort = { createdAt: -1 }
+      }
     })
     appUserQuery._id = {
       $in: activeSessionUserIds.map(it => it._id)
@@ -292,60 +350,6 @@ exports.getPublisherLiveTimeStat = async (req, res) => {
     })
   } catch (error) {
     utils.handleErrorV2(res, error)
-  }
-}
-
-const filterLiveTimeInfo = (sessions, dates) => {
-  const DAY = 86400000
-  sessions.sort((a, b) => {
-    return b.duration - a.duration
-  })
-  const max = sessions[0]?.duration
-  let count = 0
-  sessions.forEach((install, index) => {
-    count = count + install.duration
-  })
-  let duration = Math.round((new Date(dates[1]) - new Date(dates[0])) / DAY)
-
-  const type = duration == 1 ? 'day' : 'month'
-  duration = duration == 1 ? 24 : duration
-
-  let toObject = {}
-  sessions.forEach((install, index) => {
-    let label = getLabel(install.endAt, type)
-    let count = install.duration
-    toObject = {
-      ...toObject,
-      [label]: toObject[label] ? toObject[label] + count : count
-    }
-  })
-  let current = new Date(dates[0])
-  let data = {}
-  for (let i = 0; i < duration; i++) {
-    if (type == 'month') {
-      current = new Date(current.setDate(current.getDate() + 1))
-    } else if (type == 'day') {
-      current = new Date(current.setHours(current.getHours() + 1))
-    }
-    let label = getLabel(current, type)
-    data[label] = toObject[label] ? toObject[label] : 0
-  }
-  return { data, max, count }
-}
-
-const getLabel = (date, type) => {
-  const timeOpt = {
-    hour: 'numeric',
-    hour12: false
-  }
-  const dateOpt = {
-    month: 'numeric',
-    day: 'numeric'
-  }
-  if (type == 'day') {
-    return new Intl.DateTimeFormat('en-US', timeOpt).format(date)
-  } else if (type == 'month') {
-    return new Intl.DateTimeFormat('en-US', dateOpt).format(date)
   }
 }
 
