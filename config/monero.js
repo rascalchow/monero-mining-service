@@ -22,13 +22,6 @@ const initMonero = async () => {
     await monero.walletRpc.openWallet('nurev2', 'password')
   } finally {
     console.log('Wallet opened')
-    // synchronize with progress notifications
-    let height = await monero.daemon.getHeight();
-    console.log({ height })
-    console.log(await monero.walletRpc.sync(0))
-    console.log(await monero.walletRpc.getBalance())
-    // synchronize in the background
-    // await monero.walletRpc.startSyncing(5000)
   }
 }
 
