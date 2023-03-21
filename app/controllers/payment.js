@@ -153,8 +153,20 @@ exports.withdraw = async (req, res) => {
   req = matchedData(req)
 
   try {
-    // 1. Get the balance
     const publisher = req.user
+
+    // 0. Check if any pending withdrawal
+    const pending = await PublisherWithdraw.findOne({
+      publisherId: publisher._id,
+      status: { $not: COMPLETED }
+    })
+    if (pending) {
+      throw new Error(
+        'You have pending withdraw. Please wait until it finished.'
+      )
+    }
+
+    // 1. Get the balance
     const balance =
       (await PublisherBalance.findOne({ publisherId: publisher._id }))
         ?.balance || 0
