@@ -16,6 +16,10 @@ const PublisherWithdrawSchema = new mongoose.Schema(
       type: String,
       enum: CONSTS.WITHDRAW.STATUSES,
       default: CONSTS.WITHDRAW.STATUS.INITIATED
+    },
+    txHash: {
+      type: String,
+      required: true
     }
   },
   {

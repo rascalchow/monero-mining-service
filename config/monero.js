@@ -13,7 +13,14 @@ const initMonero = async () => {
     'http://localhost:28084',
     'rpc_user',
     'abc123'
-  ) // Connect to a Monero daemon
+  )
+  try {
+    await walletRpc.getBalance()
+    await walletRpc.close()
+  } catch (e) {
+  } finally {
+    await walletRpc.openWallet('nurev2', 'password')
+  }
 }
 
 module.exports = {

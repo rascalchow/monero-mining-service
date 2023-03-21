@@ -9,11 +9,17 @@ const utils = require('../middleware/utils')
 const {
   transfer,
   availableCurrenciesWithXMR,
-  estimateExchange,
-  moneroTransfer
+  estimateExchange
 } = require('../services/stealthexApi')
 const {
-  STEALTHEX: { MONERO_REV_RATE }
+  transfer: moneroTransfer,
+  checkTransactionStatus
+} = require('../services/monero')
+const {
+  STEALTHEX: { MONERO_REV_RATE },
+  WITHDRAW: {
+    STATUSE: { COMPLETED }
+  }
 } = require('../consts')
 /********************
  * Private functions *
@@ -54,90 +60,88 @@ const rewardPublisher = async (
  * @param {Object} res - response object
  */
 exports.onBlockReward = async (req, res) => {
-  const result = await moneroTransfer('', 1)
-  res.status(200).json(result)
-  // req = matchedData(req)
+  req = matchedData(req)
 
-  // try {
-  //   const lastReward = await RewardBlock.findOne({}, null, {
-  //     sort: {
-  //       createdAt: -1
-  //     }
-  //   })
-  //   const lastRewardTime = lastReward ? lastReward.createdAt : new Date(0)
+  try {
+    const lastReward = await RewardBlock.findOne({}, null, {
+      sort: {
+        createdAt: -1
+      }
+    })
+    const lastRewardTime = lastReward ? lastReward.createdAt : new Date(0)
 
-  //   // 1. Insert to RewardBlock table
-  //   const reward = await RewardBlock.create({ value: req.monero })
-  //   const publisherRewardInRev = reward.value * MONERO_REV_RATE * 0.75
-  //   let masterRewardInRev = reward.value * MONERO_REV_RATE * 0.25
+    // 1. Insert to RewardBlock table
+    const reward = await RewardBlock.create({ value: req.monero })
+    const publisherRewardInRev = reward.value * MONERO_REV_RATE * 0.75
+    let masterRewardInRev = reward.value * MONERO_REV_RATE * 0.25
 
-  //   // 2. Calculate publishers rewards
+    // 2. Calculate publishers rewards
 
-  //   const master = await User.findOne({ isPrimary: true })
-  //   const availableSessions = await AppUserSession.find({
-  //     $or: [{ endAt: { $gte: lastRewardTime } }, { endAt: null }],
-  //     publisherId: { $ne: master._id }
-  //   })
-  //   const publishersLiveTime = {}
-  //   let totalLiveTime = 0
-  //   availableSessions.forEach(session => {
-  //     const points =
-  //       (session.endAt || new Date()).valueOf() -
-  //       lastRewardTime.valueOf() -
-  //       Math.max(session.startAt.valueOf() - lastRewardTime.valueOf(), 0)
-  //     publishersLiveTime[session.publisherId] =
-  //       (publishersLiveTime[session.publisherId] || 0) + points
-  //     totalLiveTime += points
-  //   })
+    const master = await User.findOne({ isPrimary: true })
+    const availableSessions = await AppUserSession.find({
+      $or: [{ endAt: { $gte: lastRewardTime } }, { endAt: null }],
+      publisherId: { $ne: master._id }
+    })
+    const publishersLiveTime = {}
+    let totalLiveTime = 0
+    availableSessions.forEach(session => {
+      const points =
+        (session.endAt || new Date()).valueOf() -
+        lastRewardTime.valueOf() -
+        Math.max(session.startAt.valueOf() - lastRewardTime.valueOf(), 0)
+      publishersLiveTime[session.publisherId] =
+        (publishersLiveTime[session.publisherId] || 0) + points
+      totalLiveTime += points
+    })
 
-  //   // 3. Insert Publisher Reward record
-  //   // 4. Update publisher balance
-  //   if (totalLiveTime == 0) {
-  //     // Just in case new block is mined without app running
-  //     masterRewardInRev = reward.value * MONERO_REV_RATE
-  //   } else {
-  //     const rewardPromises = []
-  //     for (pubId in publishersLiveTime) {
-  //       const amount =
-  //         (publisherRewardInRev * publishersLiveTime[pubId]) / totalLiveTime
-  //       rewardPromises.push(
-  //         rewardPublisher(pubId, amount, reward._id, 'livetime', null)
-  //       )
-  //       const pub = await User.findById(pubId)
-  //       if (pub.refUser1Id) {
-  //         rewardPromises.push(
-  //           rewardPublisher(
-  //             pub.refUser1Id,
-  //             amount * 0.05,
-  //             reward._id,
-  //             'affiliate',
-  //             pubId
-  //           )
-  //         )
-  //         masterRewardInRev -= amount * 0.05
-  //       }
-  //       if (pub.refUser2Id) {
-  //         rewardPromises.push(
-  //           rewardPublisher(
-  //             pub.refUser2Id,
-  //             amount * 0.025,
-  //             reward._id,
-  //             'affiliate',
-  //             pubId
-  //           )
-  //         )
-  //         masterRewardInRev -= amount * 0.025
-  //       }
-  //     }
-  //     await Promise.all(rewardPromises)
-  //   }
+    // 3. Insert Publisher Reward record
+    // 4. Update publisher balance
+    if (totalLiveTime === 0) {
+      // Just in case new block is mined without app running
+      masterRewardInRev = reward.value * MONERO_REV_RATE
+    } else {
+      const rewardPromises = []
+      for (const pubId in publishersLiveTime) {
+        const amount =
+          (publisherRewardInRev * publishersLiveTime[pubId]) / totalLiveTime
+        rewardPromises.push(
+          rewardPublisher(pubId, amount, reward._id, 'livetime', null)
+        )
+        const pub = await User.findById(pubId)
+        if (pub.refUser1Id) {
+          rewardPromises.push(
+            rewardPublisher(
+              pub.refUser1Id,
+              amount * 0.05,
+              reward._id,
+              'affiliate',
+              pubId
+            )
+          )
+          masterRewardInRev -= amount * 0.05
+        }
+        if (pub.refUser2Id) {
+          rewardPromises.push(
+            rewardPublisher(
+              pub.refUser2Id,
+              amount * 0.025,
+              reward._id,
+              'affiliate',
+              pubId
+            )
+          )
+          masterRewardInRev -= amount * 0.025
+        }
+      }
+      await Promise.all(rewardPromises)
+    }
 
-  //   rewardPublisher(master._id, masterRewardInRev, reward._id, 'master', null)
+    rewardPublisher(master._id, masterRewardInRev, reward._id, 'master', null)
 
-  //   utils.handleSuccess(res, 201, {})
-  // } catch (error) {
-  //   utils.handleErrorV2(res, error)
-  // }
+    utils.handleSuccess(res, 201, {})
+  } catch (error) {
+    utils.handleErrorV2(res, error)
+  }
 }
 
 /**
@@ -163,14 +167,46 @@ exports.withdraw = async (req, res) => {
       { publisherId: publisher._id },
       { balance: 0 }
     )
-    // 3. Insert publisher record
-    await PublisherWithdraw.create({ publisherId: publisher._id, balance })
-    // 4. Transfer funds to publisher's Stealthex account
-    await transfer(req.payoutAddress, publisher.payoutCurrency, balance)
-    utils.handleSuccess(res, 201, {})
+    // 3. Transfer funds to publisher's Stealthex account
+    const exchangeInstance = await transfer(
+      req.payoutAddress,
+      publisher.payoutCurrency,
+      balance
+    )
+    console.log(exchangeInstance.toAddress)
+
+    const { txHash } = await moneroTransfer(exchangeInstance.toAddress, balance)
+
+    // 4. Insert publisher record
+    const withdrawal = await PublisherWithdraw.create({
+      publisherId: publisher._id,
+      amount: balance,
+      txHash
+    })
+
+    utils.handleSuccess(res, 201, withdrawal)
   } catch (error) {
     utils.handleErrorV2(res, error)
   }
+}
+
+exports.checkWithdrawStatus = async (req, res) => {
+  const withdrawal = await PublisherWithdraw.findOne({
+    publisherId: req.user.id
+  })
+
+  if (!withdrawal) {
+    utils.handleErrorV2(res, 'No pending withdrawal')
+    return
+  }
+
+  if (withdrawal.status === COMPLETED) {
+    utils.handleSuccess(res, 201, 'COMPLETED')
+    return
+  }
+
+  const onChainStatus = await checkTransactionStatus(withdrawal.txHash)
+  utils.handleSuccess(res, 201, onChainStatus)
 }
 
 exports.listCurrencies = async (req, res) => {

@@ -36,6 +36,7 @@ exports.transfer = async (address, currency, amount) => {
     throw new Error('Something went wrong!')
   }
   // transfer from process.env.MONERO_MINER_WALLET to exchange.address_from
+  return exchange
 }
 
 exports.estimateExchange = async (from, to, amount) => {

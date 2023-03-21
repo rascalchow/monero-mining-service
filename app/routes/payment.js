@@ -45,4 +45,13 @@ router.get(
   controller.estimateExchange
 )
 
+router.get(
+  '/withdraw_status',
+  requireAuth,
+  AuthController.requireApproval,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
+  trimRequest.all,
+  controller.checkWithdrawStatus
+)
+
 module.exports = router

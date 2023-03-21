@@ -72,7 +72,8 @@ module.exports = {
       'completed'
     ],
     STATUS: {
-      INITIATED: 'initiated'
+      INITIATED: 'initiated',
+      COMPLETED: 'completed'
     },
     SORT_KEY: ['refereeEmail', 'code', 'status', 'acceptedAt', 'createdAt'],
     REFERRALS_SORT_KEY: ['status', 'companyName', 'referrals']

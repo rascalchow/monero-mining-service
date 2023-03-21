@@ -12,6 +12,7 @@ const passport = require('passport')
 const app = express()
 // const i18n = require('i18n')
 const initMongo = require('./config/mongo')
+const { initMonero } = require('./config/monero')
 const path = require('path')
 const { seedAdminUser } = require('./app/controllers/auth')
 const { seedAppConfig } = require('./app/controllers/settings')
@@ -103,5 +104,7 @@ initMongo(() => {
   seedAdminUser()
   seedAppConfig()
 })
+
+initMonero()
 
 module.exports = app // for testing
