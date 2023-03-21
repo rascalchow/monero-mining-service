@@ -8,7 +8,7 @@ exports.setCurrent = [
     .not()
     .isEmpty()
     .withMessage('IS_EMPTY')
-    .matches('([0-9]+\.)*[0-9]+')
+    .matches('([0-9]+.)*[0-9]+')
     .withMessage('VERSION_IS_NOT_VALID'),
   (req, res, next) => {
     validationResult(req, res, next)

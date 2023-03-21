@@ -27,7 +27,6 @@ router.get(
   controller.getItems
 )
 
-
 router.get(
   '/',
   requireAuth,

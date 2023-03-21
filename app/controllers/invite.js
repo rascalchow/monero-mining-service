@@ -1,9 +1,6 @@
-const fs = require('fs')
-const path = require('path')
 const mongoose = require('mongoose')
 const utils = require('../middleware/utils')
 const { matchedData } = require('express-validator')
-const uuid = require('uuid')
 const model = require('../models/invite')
 const User = require('../models/user')
 const { INVITE } = require('../consts')
@@ -11,6 +8,41 @@ const db = require('../middleware/db')
 const CONSTS = require('../consts')
 
 const REFERRAL_CODE_LENGTH = 6
+
+/**
+ * Generates a random unique referral code
+ */
+const generateCode = async () => {
+  const alphaNumerics =
+    '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let key = ''
+  for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+    key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
+  }
+  while ((await model.find({ code: key }).length) > 0) {
+    key = ''
+    for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+      key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
+    }
+  }
+  return key
+}
+
+const createItem = async req => {
+  return new Promise((resolve, reject) => {
+    const invite = new model({
+      referrerId: req.referrerId,
+      refereeEmail: req.refereeEmail,
+      code: req.code
+    })
+    invite.save((err, item) => {
+      if (err) {
+        reject(utils.buildErrObject(422, err.message))
+      }
+      resolve(item)
+    })
+  })
+}
 
 /**
  * Get invites function called by route
@@ -23,9 +55,7 @@ exports.get = async (req, res) => {
   if (query.search) {
     const search = query.search
     delete query.search
-    query['$or'] = [
-      { refereeEmail: { $regex: `.*${search}.*`, $options: 'i' } }
-    ]
+    query.$or = [{ refereeEmail: { $regex: `.*${search}.*`, $options: 'i' } }]
   }
   query.referrerId = id
   let sort = null
@@ -34,7 +64,9 @@ exports.get = async (req, res) => {
       sort = { [key]: query[key] }
       delete query[key]
     }
-    if (sort == null) sort = { createdAt: -1 }
+    if (sort === null) {
+      sort = { createdAt: -1 }
+    }
   })
   const processQuery = opt => {
     opt.collation = { locale: 'en' }
@@ -57,7 +89,7 @@ exports.create = async (req, res) => {
     if (user) {
       throw utils.buildErrObject(422, 'USER_ALREADY_REGISTERED')
     }
-    //generate referral code and create invite after checking if you already invited
+    // generate referral code and create invite after checking if you already invited
     const invite = await model.findOne({
       refereeEmail: email.email,
       referrerId: mongoose.Types.ObjectId(req.user._id)
@@ -88,11 +120,11 @@ exports.remove = async (req, res) => {
     req = matchedData(req)
     const invite = await model.findById(id)
     const publisherId = invite.referrerId
-    //check if the referree has already signed up
+    // check if the referree has already signed up
     if (invite.expired || invite.status !== 'invited' || !!invite.acceptedAt) {
       throw utils.buildErrObject(400, 'REFERREE_HAS_ALREADY_SIGNED_UP')
     }
-    //delete
+    // delete
     await db.deleteItem(id, model)
     // await User.findByIdAndUpdate(publisherId, {
     //   $inc: { referrals: -1 }
@@ -101,41 +133,6 @@ exports.remove = async (req, res) => {
   } catch (error) {
     utils.handleError(res, error)
   }
-}
-
-/**
- * Generates a random unique referral code
- */
-const generateCode = async () => {
-  const alphaNumerics =
-    '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  let key = ''
-  for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
-    key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
-  }
-  while ((await model.find({ code: key }).length) > 0) {
-    let key = ''
-    for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
-      key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
-    }
-  }
-  return key
-}
-
-const createItem = async req => {
-  return new Promise((resolve, reject) => {
-    const invite = new model({
-      referrerId: req.referrerId,
-      refereeEmail: req.refereeEmail,
-      code: req.code
-    })
-    invite.save((err, item) => {
-      if (err) {
-        reject(utils.buildErrObject(422, err.message))
-      }
-      resolve(item)
-    })
-  })
 }
 
 /**
@@ -191,7 +188,7 @@ exports.getReferrals = async (req, res) => {
   if (query.search) {
     const search = query.search
     delete query.search
-    query['$or'] = [{ companyName: { $regex: `.*${search}.*`, $options: 'i' } }]
+    query.$or = [{ companyName: { $regex: `.*${search}.*`, $options: 'i' } }]
   }
   query.refUser1Id = id
 
@@ -204,11 +201,13 @@ exports.getReferrals = async (req, res) => {
   })
   const processQuery = opt => {
     opt.collation = { locale: 'en' }
-    if (!!query && query['stat']) {
-      sort = { ...sort, status: query['stat'] }
+    if (!!query && query.stat) {
+      sort = { ...sort, status: query.stat }
       delete query.stat
     }
-    if (sort == null) sort = { createdAt: -1 }
+    if (sort === null) {
+      sort = { createdAt: -1 }
+    }
     return { ...opt, sort }
   }
   const data = await db.getItems(req, User, query, processQuery)
@@ -216,12 +215,12 @@ exports.getReferrals = async (req, res) => {
 }
 
 exports.getPublisherReferrals = async (req, res) => {
-  const id = req.user._id;
+  const id = req.user._id
   const query = await db.checkQueryString(req.query)
   if (query.search) {
     const search = query.search
     delete query.search
-    query['$or'] = [{ companyName: { $regex: `.*${search}.*`, $options: 'i' } }]
+    query.$or = [{ companyName: { $regex: `.*${search}.*`, $options: 'i' } }]
   }
   query.refUser1Id = id
 
@@ -237,11 +236,13 @@ exports.getPublisherReferrals = async (req, res) => {
    */
   const processQuery = opt => {
     opt.collation = { locale: 'en' }
-    if (!!query && query['stat']) {
-      sort = { ...sort, status: query['stat'] }
+    if (!!query && query.stat) {
+      sort = { ...sort, status: query.stat }
       delete query.stat
     }
-    if (sort == null) sort = { createdAt: -1 }
+    if (sort === null) {
+      sort = { createdAt: -1 }
+    }
     return { ...opt, sort }
   }
   const data = await db.getItems(req, User, query, processQuery)

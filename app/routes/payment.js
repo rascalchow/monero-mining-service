@@ -24,7 +24,6 @@ router.post(
   controller.onBlockReward
 )
 
-
 router.post(
   '/withdraw',
   requireAuth,
@@ -35,10 +34,7 @@ router.post(
   controller.withdraw
 )
 
-router.get(
-  '/currencies',
-  controller.listCurrencies
-)
+router.get('/currencies', controller.listCurrencies)
 
 router.get(
   '/estimate_exchange',
@@ -46,7 +42,7 @@ router.get(
   AuthController.requireApproval,
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
-  controller.estimateExchange,
+  controller.estimateExchange
 )
 
 module.exports = router

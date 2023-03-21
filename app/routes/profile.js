@@ -48,7 +48,7 @@ router.patch(
   AuthController.roleAuthorization(CONSTS.USER.ROLE.PUBLISHER),
   trimRequest.all,
   validate.updateCurrency,
-  controller.updateCurrency,
+  controller.updateCurrency
 )
 
 module.exports = router

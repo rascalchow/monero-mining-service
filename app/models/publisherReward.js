@@ -5,25 +5,27 @@ const PublisherRewardSchema = new mongoose.Schema(
   {
     publisherId: {
       type: mongoose.Schema.ObjectId,
-      required: true,
+      required: true
     },
-    amount: { // newly added rev balance
+    amount: {
+      // newly added rev balance
       type: Number,
-      required: true,
+      required: true
     },
-    rewardBlockId: { //  id of reward block how this publisher got paid
+    rewardBlockId: {
+      //  id of reward block how this publisher got paid
       type: mongoose.Schema.ObjectId,
-      required: true,
+      required: true
     },
     reason: {
       type: String,
       enum: ['livetime', 'master', 'affiliate'],
       default: 'livetime',
-      required: true,
+      required: true
     },
     referralId: {
-      type: mongoose.Schema.ObjectId,
-    },
+      type: mongoose.Schema.ObjectId
+    }
   },
   {
     versionKey: false,

@@ -44,7 +44,7 @@ if (process.env.USE_REDIS === 'true') {
 
 cron.schedule('*/15 * * * *', async () => {
   console.log('updating session every 15 mins')
-  //find all sessions lastSeen is older than 10 mins
+  // find all sessions lastSeen is older than 10 mins
   // and update duration
   const lastTime = moment()
     .subtract(15, 'minutes')
@@ -98,7 +98,7 @@ const server = require('http').createServer(app)
 server.listen(app.get('port'))
 
 // Init MongoDB
-initMongo(err => {
+initMongo(() => {
   // Setup)
   seedAdminUser()
   seedAppConfig()

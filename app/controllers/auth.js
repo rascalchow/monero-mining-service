@@ -1,14 +1,11 @@
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
-const path = require('path')
 const User = require('../models/user')
 const UserAccess = require('../models/userAccess')
-const UserProfile = require('../models/userProfile')
 const Invite = require('../models/invite')
 const UserEula = require('../models/userEula')
 const AppConfig = require('../models/appConfig')
 const ForgotPassword = require('../models/forgotPassword')
-const PublisherBalance = require('../models/publisherBalance')
 const utils = require('../middleware/utils')
 const uuid = require('uuid')
 const { addHours } = require('date-fns')
@@ -34,7 +31,7 @@ const generateToken = (user, duration) => {
   // Gets expiration time
   const expiration =
     Math.floor(Date.now() / 1000) +
-    60 * (duration || +process.env.JWT_EXPIRATION_IN_MINUTES)
+    60 * (duration || Number(process.env.JWT_EXPIRATION_IN_MINUTES))
 
   // returns signed and encrypted token
   return auth.encrypt(
@@ -61,7 +58,7 @@ const generatePubliserKey = async () => {
     key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
   }
   while ((await User.find({ publisherKey: key }).length) > 0) {
-    let key = ''
+    key = ''
     for (let i = 0; i < PUBLISHER_KEY_LENGTH; i++) {
       key += alphaNumerics.charAt(Math.floor(Math.random() * 62))
     }
@@ -73,7 +70,7 @@ const generatePubliserKey = async () => {
  * Creates an object with user info
  * @param {Object} req - request object
  */
-const setUserInfo = (req) => {
+const setUserInfo = req => {
   let user = {
     _id: req._id,
     name: req.name,
@@ -90,7 +87,7 @@ const setUserInfo = (req) => {
     publisherKey: req.publisherKey,
     status: req.status,
     verified: req.verified,
-    payoutCurrency: req.payoutCurrency || 'xmr',
+    payoutCurrency: req.payoutCurrency || 'xmr'
   }
   // Adds verification for testing purposes
   if (process.env.NODE_ENV !== 'production') {
@@ -280,13 +277,17 @@ const passwordsDoNotMatch = async user => {
  * @param {Object} req - request object
  */
 const registerUser = async (req, res) => {
-  const id = req['id'] //invite model id
-  const referralCode = req['referral']
-  if (id) delete req['id']
-  if (referralCode) delete req['referral']
+  const id = req.id // invite model id
+  const referralCode = req.referral
+  if (id) {
+    delete req.id
+  }
+  if (referralCode) {
+    delete req.referral
+  }
 
   try {
-    //update refUser1Id/refUser2Id
+    // update refUser1Id/refUser2Id
     const invite = await Invite.findById(id)
     const referrerId = invite.referrerId
     req.refUser1Id = mongoose.Types.ObjectId(referrerId)
@@ -299,7 +300,7 @@ const registerUser = async (req, res) => {
     await User.findByIdAndUpdate(referrerId, {
       $inc: { referrals: 1 }
     })
-    //register
+    // register
     if (!referralCode) {
       throw utils.buildErrObject(400, 'REFERRAL_CODE_DOES_NOT_EXIST')
     }
@@ -310,7 +311,7 @@ const registerUser = async (req, res) => {
     if (!invite) {
       throw utils.buildErrObject(400, 'NO_REFERRALS')
     }
-    if (invite.status == CONSTS.INVITE.STATUS.SIGNUP) {
+    if (invite.status === CONSTS.INVITE.STATUS.SIGNUP) {
       throw utils.buildErrObject(400, 'USER_ALREADY_SIGNED_UP')
     }
     if (invite.expired) {
@@ -749,27 +750,27 @@ exports.roleAuthorization = roles => async (req, res, next) => {
 exports.requireApproval = (req, res, next) => {
   try {
     checkUserIsApproved(req.user)
-    next()
+    return next()
   } catch (error) {
-    utils.handleError(res, error)
+    return utils.handleError(res, error)
   }
 }
 
 exports.requireNotDisabled = (req, res, next) => {
   try {
     checkUserIsNotInActive(req.user)
-    next()
+    return next()
   } catch (error) {
-    utils.handleError(res, error)
+    return utils.handleError(res, error)
   }
 }
 
 exports.requireNotPending = (req, res, next) => {
   try {
     checkUserIsNotPending(req.user)
-    next()
+    return next()
   } catch (error) {
-    utils.handleError(res, error)
+    return utils.handleError(res, error)
   }
 }
 
@@ -797,8 +798,8 @@ exports.seedAdminUser = async () => {
     })
 
     if (!user) {
-      const user = new User(USER)
-      await user.save()
+      const newUser = new User(USER)
+      await newUser.save()
     }
   } catch (err) {
     console.log(err)

@@ -25,8 +25,10 @@ const checkToken = req => {
  */
 exports.requireToken = (req, res, next) => {
   if (checkToken(req)) {
-    next()
-  } else {
-    utils.handleErrorV2(res, utils.buildErrObject(401, 'MISSING_VALID_TOKEN'))
+    return next()
   }
+  return utils.handleErrorV2(
+    res,
+    utils.buildErrObject(401, 'MISSING_VALID_TOKEN')
+  )
 }

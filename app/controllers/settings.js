@@ -25,7 +25,7 @@ const createDefaultEula = async () => {
  */
 exports.getEula = async (_, res) => {
   try {
-    const eulaConfig = await AppConfig.findOne({ type: 'EULA' })
+    let eulaConfig = await AppConfig.findOne({ type: 'EULA' })
     if (!eulaConfig) {
       eulaConfig = await createDefaultEula()
     }
@@ -44,7 +44,7 @@ exports.getEula = async (_, res) => {
 exports.updateEula = async (req, res) => {
   try {
     req = matchedData(req)
-    let eulaConfig = await AppConfig.findOneAndUpdate(
+    const eulaConfig = await AppConfig.findOneAndUpdate(
       { type: 'EULA' },
       { data: { eula: req.eula } },
       { new: true }

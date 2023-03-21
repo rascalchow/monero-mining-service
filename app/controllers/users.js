@@ -60,7 +60,7 @@ exports.getItems = async (req, res) => {
     if (query.search) {
       const search = query.search
       delete query.search
-      query['$or'] = [
+      query.$or = [
         { name: { $regex: `.*${search}.*`, $options: 'i' } },
         { email: { $regex: `.*${search}.*`, $options: 'i' } },
         { companyName: { $regex: `.*${search}.*`, $options: 'i' } }
@@ -77,11 +77,13 @@ exports.getItems = async (req, res) => {
 
     const processQuery = opt => {
       opt.collation = { locale: 'en' }
-      if (!!query && query['stat']) {
-        sort = { ...sort, status: query['stat'] }
+      if (!!query && query.stat) {
+        sort = { ...sort, status: query.stat }
         delete query.stat
       }
-      if (sort == null) sort = { createdAt: -1 }
+      if (sort === null) {
+        sort = { createdAt: -1 }
+      }
       return { ...opt, sort }
     }
 
@@ -120,11 +122,11 @@ exports.getItem = async (req, res) => {
       totalUninstalls
     } = totalCount[0]
     const user = await db.getItem(id, model)
-    const liveTimeRate = totalLiveTime == 0 ? 0 : user.liveTime / totalLiveTime
-    const liveRate = totalLive == 0 ? 0 : user.live / totalLive
-    const installsRate = totalInstalls == 0 ? 0 : user.installs / totalInstalls
+    const liveTimeRate = totalLiveTime === 0 ? 0 : user.liveTime / totalLiveTime
+    const liveRate = totalLive === 0 ? 0 : user.live / totalLive
+    const installsRate = totalInstalls === 0 ? 0 : user.installs / totalInstalls
     const uninstallsRate =
-      totalUninstalls == 0 ? 0 : user.uninstalls / totalUninstalls
+      totalUninstalls === 0 ? 0 : user.uninstalls / totalUninstalls
     res.status(200).json({
       ...user,
       liveTimeRate,
@@ -192,7 +194,7 @@ exports.deleteItem = async (req, res) => {
     req = matchedData(req)
     const id = await utils.isIDGood(req.id)
 
-    //delete all references
+    // delete all references
     // await Invite.deleteMany({
     //   referrerId: id
     // })
