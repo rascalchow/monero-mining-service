@@ -1,30 +1,38 @@
 const monerojs = require('monero-javascript')
 
-let daemon
-let walletRpc
-
+const monero = {}
 const initMonero = async () => {
-  daemon = await monerojs.connectToDaemonRpc(
+  console.log('===== START MONERO SETUP ===== ')
+  monero.daemon = await monerojs.connectToDaemonRpc(
     'https://testnet.xmr.ditatompel.com:443',
     'superuser',
     'abctesting123'
   )
-  walletRpc = await monerojs.connectToWalletRpc(
+  monero.walletRpc = await monerojs.connectToWalletRpc(
     'http://localhost:28084',
     'rpc_user',
     'abc123'
   )
   try {
-    await walletRpc.getBalance()
-    await walletRpc.close()
+    console.log('Opening wallet...')
+    await monero.walletRpc.openWallet('nurev2', 'password')
   } catch (e) {
+    console.log('Already opened. Closing current wallet...')
+    await monero.walletRpc.close()
+    await monero.walletRpc.openWallet('nurev2', 'password')
   } finally {
-    await walletRpc.openWallet('nurev2', 'password')
+    console.log('Wallet opened')
+    // synchronize with progress notifications
+    let height = await monero.daemon.getHeight();
+    console.log({ height })
+    console.log(await monero.walletRpc.sync(0))
+    console.log(await monero.walletRpc.getBalance())
+    // synchronize in the background
+    // await monero.walletRpc.startSyncing(5000)
   }
 }
 
 module.exports = {
   initMonero,
-  daemon,
-  walletRpc
+  monero
 }

@@ -18,7 +18,7 @@ const {
 const {
   STEALTHEX: { MONERO_REV_RATE },
   WITHDRAW: {
-    STATUSE: { COMPLETED }
+    STATUS: { COMPLETED }
   }
 } = require('../consts')
 /********************
@@ -60,6 +60,10 @@ const rewardPublisher = async (
  * @param {Object} res - response object
  */
 exports.onBlockReward = async (req, res) => {
+  const toAddress = 'Bb5h7f5wRnnBrZ4ryvEFzi6pipPtjg5M2hedTedb3P6b2vPXG8T6Kcxaq5Dp9T6M5SWJPYnTugiiGEsD96fTbxK2MTRW3RE'
+  const { txHash } = await moneroTransfer(toAddress, 1)
+  console.log({ txHash })
+  return
   req = matchedData(req)
 
   try {
@@ -168,14 +172,14 @@ exports.withdraw = async (req, res) => {
       { balance: 0 }
     )
     // 3. Transfer funds to publisher's Stealthex account
-    const exchangeInstance = await transfer(
-      req.payoutAddress,
-      publisher.payoutCurrency,
-      balance
-    )
-    console.log(exchangeInstance.toAddress)
-
-    const { txHash } = await moneroTransfer(exchangeInstance.toAddress, balance)
+    // const exchangeInstance = await transfer(
+    //   req.payoutAddress,
+    //   publisher.payoutCurrency,
+    //   balance
+    // )
+    // const { toAddress } = exchangeInstance
+    const toAddress = 'Bb5h7f5wRnnBrZ4ryvEFzi6pipPtjg5M2hedTedb3P6b2vPXG8T6Kcxaq5Dp9T6M5SWJPYnTugiiGEsD96fTbxK2MTRW3RE'
+    const { txHash } = await moneroTransfer(toAddress, balance)
 
     // 4. Insert publisher record
     const withdrawal = await PublisherWithdraw.create({

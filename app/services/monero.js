@@ -1,8 +1,8 @@
 const monerojs = require('monero-javascript')
-const { daemon, walletRpc } = require('../../config/monero')
+const { monero } = require('../../config/monero')
 
 exports.checkTransactionStatus = async txHash => {
-  const tx = await daemon.getTx(txHash)
+  const tx = await monero.daemon.getTx(txHash)
   console.log({ tx })
   let status = 'initializing'
   let confirms = 0
@@ -20,17 +20,19 @@ exports.checkTransactionStatus = async txHash => {
 
 exports.transfer = async (toAddress, amount) => {
   try {
-    const beforeBalance = await walletRpc.getBalance()
-    // let txs = await walletRpc.getTxs()
-    const createdTx = await walletRpc.createTx({
+    const beforeBalance = await monero.walletRpc.getBalance()
+    console.log({ beforeBalance })
+    // let txs = await monero.walletRpc.getTxs()
+    const createdTx = await monero.walletRpc.createTx({
       accountIndex: 0,
       address: toAddress,
       amount: new monerojs.BigInteger(String(amount)), // amount to transfer in atomic units
       relay: false // create transaction and relay to the network if true
     })
     const fee = createdTx.getFee() // "Are you sure you want to send... ?"
-    const afterBalance = await walletRpc.getBalance()
-    await walletRpc.relayTx(createdTx) // relay the transaction
+    const afterBalance = await monero.walletRpc.getBalance()
+    console.log({ afterBalance })
+    await monero.walletRpc.relayTx(createdTx) // relay the transaction
 
     return {
       txHash: createdTx.getHash(),
@@ -38,6 +40,7 @@ exports.transfer = async (toAddress, amount) => {
       afterBalance
     }
   } catch (e) {
+    console.log(e)
     return 'Wallet is not opened'
   }
 }
