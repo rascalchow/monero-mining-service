@@ -33,15 +33,11 @@ exports.transfer = async (toAddress, amount) => {
       amount: new monerojs.BigInteger(String(amount)), // amount to transfer in atomic units
       relay: false // create transaction and relay to the network if true
     })
-    const fee = createdTx.getFee() // "Are you sure you want to send... ?"
-    const afterBalance = await monero.walletFull.getBalance()
-    console.log({ afterBalance })
     await monero.walletFull.relayTx(createdTx) // relay the transaction
 
     return {
       txHash: createdTx.getHash(),
-      beforeBalance,
-      afterBalance
+      beforeBalance
     }
   } catch (e) {
     console.log({ e })

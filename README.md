@@ -104,6 +104,10 @@ ssh -o StrictHostKeyChecking=no root@45.32.245.96 "./deploy.sh"
 
 # Monero Wallet Setup
 
+```
+Note: This is not required for running server
+```
+
 ## Download Monero CLI on Machine
 
 You can download CLI wallet using [this link](https://www.monero.how/tutorial-how-to-create-a-command-line-monero-wallet).
@@ -134,11 +138,6 @@ which should print
 9yMkbxg2Quc53KkTJ8XEAf3Zk3c9hfe3S9CS4zG596eBNLHzQHN5AkdZ6rhH6MJjU6Ck5sXRq7v1T7UWZsuYRmtA1C1XbUY
 ```
 
-## Run RPC Wallet
-
-```bash
-./monero-wallet-rpc --testnet --rpc-bind-port 28084 --rpc-login rpc_user:abc123 --wallet-dir ./ --daemon-address testnet.xmr-tw.org:28081 --log-level 2
-```
 
 ## Reference Links
 

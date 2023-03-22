@@ -155,7 +155,6 @@ exports.withdraw = async (req, res) => {
     req = matchedData(req)
 
     // 0. Check if any pending withdrawal
-    console.log({ COMPLETED })
     const pending = await PublisherWithdraw.findOne({
       publisherId: publisher._id,
       status: { $ne: COMPLETED }
@@ -183,11 +182,14 @@ exports.withdraw = async (req, res) => {
       throw new Error('INVALID_PAYOUT_ADDRESS')
     }
 
-    // const { toAddress } = exchangeInstance
-    const toAddress =
-      'Bb5h7f5wRnnBrZ4ryvEFzi6pipPtjg5M2hedTedb3P6b2vPXG8T6Kcxaq5Dp9T6M5SWJPYnTugiiGEsD96fTbxK2MTRW3RE'
+    let { toAddress } = exchangeInstance
+
+    if (process.env.NODE_ENV === 'development') {
+      // Since it's testnet on development, we use our test-able address, not random address from stealthex
+      toAddress =
+        'Bb5h7f5wRnnBrZ4ryvEFzi6pipPtjg5M2hedTedb3P6b2vPXG8T6Kcxaq5Dp9T6M5SWJPYnTugiiGEsD96fTbxK2MTRW3RE'
+    }
     const transferResp = await moneroTransfer(toAddress, balance)
-    console.log({ transferResp })
     if (!transferResp) {
       throw new Error('MONERO_NETWORK_ERROR')
     }
