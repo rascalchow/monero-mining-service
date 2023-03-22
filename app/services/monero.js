@@ -16,6 +16,10 @@ exports.checkTransactionStatus = async txHash => {
     status = 'confirmed'
     confirms = tx.getNumConfirmations()
   }
+  return {
+    status,
+    confirms
+  }
 }
 
 exports.transfer = async (toAddress, amount) => {
@@ -40,7 +44,7 @@ exports.transfer = async (toAddress, amount) => {
       afterBalance
     }
   } catch (e) {
-    console.log(e)
-    return 'Wallet is not opened'
+    console.log({ e })
+    return null
   }
 }

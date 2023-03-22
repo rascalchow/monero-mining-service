@@ -26,17 +26,21 @@ exports.availableCurrenciesWithXMR = async () => {
 }
 
 exports.transfer = async (address, currency, amount) => {
-  const exchange = await post('exchange', {
-    currency_from: 'xmr', // Monero token
-    currency_to: currency,
-    address_to: address,
-    amount_from: amount
-  })
-  if (amount !== exchange.expected_amount) {
-    throw new Error('Something went wrong!')
+  try {
+    const exchange = await post('exchange', {
+      currency_from: 'xmr', // Monero token
+      currency_to: currency,
+      address_to: address,
+      amount_from: amount
+    })
+    if (amount !== exchange.expected_amount) {
+      throw new Error('Something went wrong!')
+    }
+    // transfer from process.env.MONERO_MINER_WALLET to exchange.address_from
+    return exchange
+  } catch (err) {
+    return null
   }
-  // transfer from process.env.MONERO_MINER_WALLET to exchange.address_from
-  return exchange
 }
 
 exports.estimateExchange = async (from, to, amount) => {
