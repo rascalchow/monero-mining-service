@@ -101,3 +101,47 @@ When you create a new controller file, try to also create another file with vali
 ```sh
 ssh -o StrictHostKeyChecking=no root@45.32.245.96 "./deploy.sh"
 ```
+
+# Monero Wallet Setup
+
+## Download Monero CLI on Machine
+
+You can download CLI wallet using [this link](https://www.monero.how/tutorial-how-to-create-a-command-line-monero-wallet).
+
+## For development environment setup:
+
+After download, run below command inside directory
+
+```bash
+./monero-wallet-cli --testnet --restore-deterministic-wallet
+```
+
+Wallet file name: `nurev2`
+
+wallet seed phrase: **\*\*\*\*** (will provide via Slack)
+
+wallet password: `password`
+
+After finished you can verify the setup by running
+
+```bash
+address
+```
+
+which should print
+
+```bash
+9yMkbxg2Quc53KkTJ8XEAf3Zk3c9hfe3S9CS4zG596eBNLHzQHN5AkdZ6rhH6MJjU6Ck5sXRq7v1T7UWZsuYRmtA1C1XbUY
+```
+
+## Run RPC Wallet
+
+```bash
+./monero-wallet-rpc --testnet --rpc-bind-port 28084 --rpc-login rpc_user:abc123 --wallet-dir ./ --daemon-address testnet.xmr-tw.org:28081 --log-level 2
+```
+
+## Reference Links
+
+[Remote Daemon Node List](https://www.ditatompel.com/monero/remote-node)
+
+[Testnet Transaction Explorer](https://testnet.xmrchain.com/search?value=2220000)

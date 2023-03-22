@@ -18,7 +18,7 @@ const {
 const {
   STEALTHEX: { MONERO_REV_RATE },
   WITHDRAW: {
-    STATUSE: { COMPLETED }
+    STATUS: { COMPLETED }
   }
 } = require('../consts')
 /********************
@@ -150,16 +150,24 @@ exports.onBlockReward = async (req, res) => {
  * @param {Object} res - response object
  */
 exports.withdraw = async (req, res) => {
-  req = matchedData(req)
-
   try {
-    // 1. Get the balance
     const publisher = req.user
+
+    // 0. Check if any pending withdrawal
+    const pending = await PublisherWithdraw.findOne({
+      publisherId: publisher._id,
+      status: { $not: COMPLETED }
+    })
+    if (pending) {
+      throw new Error('PENDING_WITHDRAWAL')
+    }
+
+    // 1. Get the balance
     const balance =
       (await PublisherBalance.findOne({ publisherId: publisher._id }))
         ?.balance || 0
     if (balance === 0) {
-      throw new Error('No balance to withdraw')
+      throw new Error('NO_BALANCE')
     }
 
     // 2. Update publisher balance
@@ -173,15 +181,24 @@ exports.withdraw = async (req, res) => {
       publisher.payoutCurrency,
       balance
     )
-    console.log(exchangeInstance.toAddress)
+    if (!exchangeInstance) {
+      throw new Error('INVALID_PAYOUT_ADDRESS')
+    }
 
-    const { txHash } = await moneroTransfer(exchangeInstance.toAddress, balance)
+    // const { toAddress } = exchangeInstance
+    const toAddress =
+      'Bb5h7f5wRnnBrZ4ryvEFzi6pipPtjg5M2hedTedb3P6b2vPXG8T6Kcxaq5Dp9T6M5SWJPYnTugiiGEsD96fTbxK2MTRW3RE'
+    const transferResp = await moneroTransfer(toAddress, balance)
+    console.log({ transferResp })
+    if (!transferResp) {
+      throw new Error('MONERO_NETWORK_ERROR')
+    }
 
     // 4. Insert publisher record
     const withdrawal = await PublisherWithdraw.create({
       publisherId: publisher._id,
       amount: balance,
-      txHash
+      txHash: transferResp.txHash
     })
 
     utils.handleSuccess(res, 201, withdrawal)
@@ -201,12 +218,12 @@ exports.checkWithdrawStatus = async (req, res) => {
   }
 
   if (withdrawal.status === COMPLETED) {
-    utils.handleSuccess(res, 201, 'COMPLETED')
+    utils.handleSuccess(res, 201, { status: COMPLETED })
     return
   }
 
   const onChainStatus = await checkTransactionStatus(withdrawal.txHash)
-  utils.handleSuccess(res, 201, onChainStatus)
+  utils.handleSuccess(res, 201, { ...withdrawal, tx: onChainStatus })
 }
 
 exports.listCurrencies = async (req, res) => {
