@@ -64,7 +64,7 @@ module.exports = {
   },
   WITHDRAW: {
     STATUSES: [
-      'initiating',
+      'initiated',
       'failed',
       'tranferring',
       'block confirming',

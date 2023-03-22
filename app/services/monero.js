@@ -24,19 +24,19 @@ exports.checkTransactionStatus = async txHash => {
 
 exports.transfer = async (toAddress, amount) => {
   try {
-    const beforeBalance = await monero.walletRpc.getBalance()
+    const beforeBalance = await monero.walletFull.getBalance()
     console.log({ beforeBalance })
-    // let txs = await monero.walletRpc.getTxs()
-    const createdTx = await monero.walletRpc.createTx({
+    // let txs = await monero.walletFull.getTxs()
+    const createdTx = await monero.walletFull.createTx({
       accountIndex: 0,
       address: toAddress,
       amount: new monerojs.BigInteger(String(amount)), // amount to transfer in atomic units
       relay: false // create transaction and relay to the network if true
     })
     const fee = createdTx.getFee() // "Are you sure you want to send... ?"
-    const afterBalance = await monero.walletRpc.getBalance()
+    const afterBalance = await monero.walletFull.getBalance()
     console.log({ afterBalance })
-    await monero.walletRpc.relayTx(createdTx) // relay the transaction
+    await monero.walletFull.relayTx(createdTx) // relay the transaction
 
     return {
       txHash: createdTx.getHash(),
