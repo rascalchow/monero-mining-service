@@ -104,9 +104,7 @@ ssh -o StrictHostKeyChecking=no root@45.32.245.96 "./deploy.sh"
 
 # Monero Wallet Setup
 
-```
-Note: This is not required for running server
-```
+    Note: This is not required for running server
 
 ## Download Monero CLI on Machine
 
@@ -137,7 +135,6 @@ which should print
 ```bash
 9yMkbxg2Quc53KkTJ8XEAf3Zk3c9hfe3S9CS4zG596eBNLHzQHN5AkdZ6rhH6MJjU6Ck5sXRq7v1T7UWZsuYRmtA1C1XbUY
 ```
-
 
 ## Reference Links
 
