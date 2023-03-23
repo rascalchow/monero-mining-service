@@ -10,9 +10,10 @@ const get = async (uri, query) => {
   return response
 }
 const post = async (uri, body) => {
-  return await axios.post(BASE_URL + uri, body, {
+  const { data: response } = await axios.post(BASE_URL + uri, body, {
     params: { api_key: API_KEY }
   })
+  return response
 }
 
 /**
@@ -33,7 +34,7 @@ exports.transfer = async (address, currency, amount) => {
       address_to: address,
       amount_from: amount
     })
-    if (amount !== exchange.expected_amount) {
+    if (amount !== Number(exchange.expected_amount)) {
       throw new Error('Something went wrong!')
     }
     // transfer from process.env.MONERO_MINER_WALLET to exchange.address_from

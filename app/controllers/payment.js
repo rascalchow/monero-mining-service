@@ -152,29 +152,27 @@ exports.onBlockReward = async (req, res) => {
 exports.withdraw = async (req, res) => {
   try {
     const publisher = req.user
+    req = matchedData(req)
 
     // 0. Check if any pending withdrawal
+    console.log({ COMPLETED })
     const pending = await PublisherWithdraw.findOne({
       publisherId: publisher._id,
-      status: { $not: COMPLETED }
+      status: { $ne: COMPLETED }
     })
     if (pending) {
       throw new Error('PENDING_WITHDRAWAL')
     }
 
     // 1. Get the balance
-    const balance =
+    const revBalance =
       (await PublisherBalance.findOne({ publisherId: publisher._id }))
         ?.balance || 0
-    if (balance === 0) {
+    if (revBalance === 0) {
       throw new Error('NO_BALANCE')
     }
+    const balance = revBalance / 1000
 
-    // 2. Update publisher balance
-    await PublisherBalance.updateMany(
-      { publisherId: publisher._id },
-      { balance: 0 }
-    )
     // 3. Transfer funds to publisher's Stealthex account
     const exchangeInstance = await transfer(
       req.payoutAddress,
@@ -201,9 +199,15 @@ exports.withdraw = async (req, res) => {
       txHash: transferResp.txHash
     })
 
+    // 2. Update publisher balance
+    await PublisherBalance.updateMany(
+      { publisherId: publisher._id },
+      { balance: 0 }
+    )
+
     utils.handleSuccess(res, 201, withdrawal)
   } catch (error) {
-    utils.handleErrorV2(res, error)
+    utils.handleErrorV2(res, error.message)
   }
 }
 
@@ -223,7 +227,7 @@ exports.checkWithdrawStatus = async (req, res) => {
   }
 
   const onChainStatus = await checkTransactionStatus(withdrawal.txHash)
-  utils.handleSuccess(res, 201, { ...withdrawal, tx: onChainStatus })
+  utils.handleSuccess(res, 201, { ...withdrawal._doc, tx: onChainStatus })
 }
 
 exports.listCurrencies = async (req, res) => {
