@@ -13,7 +13,8 @@ const {
 } = require('../services/stealthexApi')
 const {
   transfer: moneroTransfer,
-  checkTransactionStatus
+  checkTransactionStatus,
+  moneroBalance
 } = require('../services/monero')
 const {
   STEALTHEX: { MONERO_REV_RATE },
@@ -155,7 +156,6 @@ exports.withdraw = async (req, res) => {
     req = matchedData(req)
 
     // 0. Check if any pending withdrawal
-    console.log({ COMPLETED })
     const pending = await PublisherWithdraw.findOne({
       publisherId: publisher._id,
       status: { $ne: COMPLETED }
@@ -172,22 +172,31 @@ exports.withdraw = async (req, res) => {
       throw new Error('NO_BALANCE')
     }
     const balance = revBalance / 1000
+    console.log({ balance })
 
-    // 3. Transfer funds to publisher's Stealthex account
-    const exchangeInstance = await transfer(
-      req.payoutAddress,
-      publisher.payoutCurrency,
-      balance
-    )
-    if (!exchangeInstance) {
-      throw new Error('INVALID_PAYOUT_ADDRESS')
+    const currentBalance = await moneroBalance()
+    if (currentBalance < balance) {
+      throw new Error('REACH_OUT_SUPPORT_TEAM')
     }
 
-    // const { toAddress } = exchangeInstance
-    const toAddress =
-      'Bb5h7f5wRnnBrZ4ryvEFzi6pipPtjg5M2hedTedb3P6b2vPXG8T6Kcxaq5Dp9T6M5SWJPYnTugiiGEsD96fTbxK2MTRW3RE'
+    // 3. Transfer funds to publisher's Stealthex account
+    let toAddress
+    if (process.env.NODE_ENV === 'development') {
+      // Since it's testnet on development, we use our test-able address, not random address from stealthex
+      toAddress =
+        'Bb5h7f5wRnnBrZ4ryvEFzi6pipPtjg5M2hedTedb3P6b2vPXG8T6Kcxaq5Dp9T6M5SWJPYnTugiiGEsD96fTbxK2MTRW3RE'
+    } else {
+      const exchangeInstance = await transfer(
+        req.payoutAddress,
+        publisher.payoutCurrency,
+        balance
+      )
+      if (!exchangeInstance) {
+        throw new Error('INVALID_PAYOUT_ADDRESS')
+      }
+      toAddress = exchangeInstance.toAddress
+    }
     const transferResp = await moneroTransfer(toAddress, balance)
-    console.log({ transferResp })
     if (!transferResp) {
       throw new Error('MONERO_NETWORK_ERROR')
     }

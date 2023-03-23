@@ -40,6 +40,7 @@ exports.transfer = async (address, currency, amount) => {
     // transfer from process.env.MONERO_MINER_WALLET to exchange.address_from
     return exchange
   } catch (err) {
+    console.log(err.message)
     return null
   }
 }

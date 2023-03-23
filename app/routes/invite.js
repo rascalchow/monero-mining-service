@@ -23,6 +23,14 @@ router.get(
   controller.get
 )
 
+router.get(
+  '/:id',
+  requireAuth,
+  AuthController.roleAuthorization(CONSTS.USER.ROLE.ADMIN),
+  trimRequest.all,
+  controller.getPublisherInvites
+)
+
 /*
  * Post invite route
  */
