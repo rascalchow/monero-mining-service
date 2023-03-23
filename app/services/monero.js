@@ -22,6 +22,10 @@ exports.checkTransactionStatus = async txHash => {
   }
 }
 
+exports.moneroBalance = async () => {
+  return await monero.walletFull.getBalance()
+}
+
 exports.transfer = async (toAddress, amount) => {
   try {
     const beforeBalance = await monero.walletFull.getBalance()
