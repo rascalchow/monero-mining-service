@@ -1,22 +1,26 @@
 const monerojs = require('monero-javascript')
 
 const monero = {}
+
 const initMonero = async () => {
   console.log('===== START MONERO SETUP ===== ')
-  monero.daemon = await monerojs.connectToDaemonRpc(
-    'https://testnet.xmr.ditatompel.com:443',
-    'superuser',
-    'abctesting123'
-  )
+  const serverUri =
+    process.env.NODE_ENV === 'production'
+      ? 'xmr.opensrc.one:18081'
+      : 'https://testnet.xmr.ditatompel.com:443'
+  const networkType =
+    process.env.NODE_ENV === 'production' ? 'mainnet' : 'testnet'
+  const mnemonic = process.env.MNEMONIC_PHRASE
+  const password = process.env.WALLET_PASSWORD
 
+  monero.daemon = await monerojs.connectToDaemonRpc(serverUri)
   console.log('Opening Wallet...')
 
   monero.walletFull = await monerojs.createWalletFull({
-    password: 'supersecretpassword123',
-    networkType: 'testnet',
-    serverUri: 'http://testnet.xmr-tw.org:28081',
-    mnemonic:
-      'atrium fading losing husband pencil quick awful adept rural bids wizard cavernous tedious nabbing soggy wetsuit royal awful sixteen whipped spying imagine vibrate zinger awful',
+    password,
+    networkType,
+    serverUri,
+    mnemonic,
     restoreHeight: 2198800
   })
   // synchronize with progress notifications
